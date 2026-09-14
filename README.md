@@ -13,6 +13,7 @@ aparte: cualquiera puede escribir el suyo y elegirlo desde el panel.
 [![Platform](https://img.shields.io/badge/platform-Windows%20·%20macOS%20·%20Linux-1f2430)](#instalar)
 [![Runtime](https://img.shields.io/badge/runtime-Electron-4a6fa5)](pet/package.json)
 [![Dependencias del dibujo](https://img.shields.io/badge/dependencias%20del%20dibujo-0-2b6e4f)](penguin-mascot.js)
+[![Red](https://img.shields.io/badge/red-cero%20peticiones-2b6e4f)](SECURITY.md)
 
 </div>
 
@@ -194,6 +195,7 @@ Claude-pet/
 │                         en tu propia página.
 ├── AVATARS.md            El contrato de avatares y cómo sumar uno.
 ├── ROADMAP.md            En qué orden se construyó esto y qué falta.
+├── SECURITY.md           Qué guarda, qué no, y por qué está cerrado como está.
 ├── .claude/skills/       Skills para diseñar avatares y notebooks con Claude.
 └── pet/
     ├── main.js           Proceso principal de Electron. La ventana transparente,
@@ -201,8 +203,10 @@ Claude-pet/
     │                     ciclo de vida y el click-through.
     ├── preload.js        El puente con contextIsolation. La única superficie
     │                     que la ventana ve del proceso principal.
-    ├── pet.html          La ventana: estados del avatar, globo de diálogo,
-    │                     controles del hover y panel de ajustes.
+    ├── pet.html          El marcado y el estilo de la ventana.
+    ├── pet.js            La ventana: estados del avatar, globo de diálogo,
+    │                     controles del hover y panel de ajustes. Vive afuera
+    │                     del HTML porque la CSP no admite scripts inline.
     ├── hook.js           Lo que ejecuta Claude Code. Escribe el estado de la
     │                     sesión y, si hace falta, levanta el pet.
     ├── avatars.js        El registro de avatares y su contrato.
@@ -217,6 +221,18 @@ Claude-pet/
 Los avatares no dependen de nada del pet: `penguin-mascot.js` se puede usar en
 una página cualquiera con un `<div>` y dos líneas. El pet es un consumidor más,
 y es la única pieza que sabe de Claude Code.
+
+## Seguridad y privacidad
+
+No habla con la red, no hace tracking y no lee tus conversaciones. Lo único que
+guarda es, por sesión abierta, el directorio del proyecto y el estado — en tu
+perfil local, y se borra cuando la sesión termina.
+
+La ventana corre con sandbox, aislamiento de contexto y una CSP con
+`connect-src 'none'`, así que ni un bug podría hacer una petición. El hook sale
+siempre con 0 y sin escribir en stdout, para no poder romperte un turno.
+
+**→ [Postura completa, qué se guarda y el repaso del OWASP Top 10](SECURITY.md)**
 
 ## Licencia
 
