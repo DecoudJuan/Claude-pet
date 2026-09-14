@@ -99,26 +99,52 @@ raíz — reutilizable en cualquier página web, sin nada del pet — y en
 `pet/avatars/<id>.js` sólo el `register()` que lo envuelve. Son dos `<script>`
 en vez de uno.
 
-## La notebook es un dato aparte
+## Dos reglas estructurales que no se negocian
 
-La máquina no es del avatar: viene de `PetDevices` y el usuario la elige. Llega
-en `opts.device` y puede cambiar en caliente por `setDevice(dev)`.
+Estas dos son lo que hace que el sistema funcione con más de un avatar. Si las
+rompés, tu avatar anda solo pero rompe a los demás.
+
+### 1. El cuerpo es canónico
+
+**De la clavícula para abajo, todos los avatares son idénticos.** Misma forma,
+mismo tamaño, mismos anclajes. Lo que cambia es de ahí para arriba: cabeza,
+cara, colores, accesorios.
+
+No pidas la geometría de memoria ni la copies del pingüino: **pedila**.
 
 ```js
-{ id: 'macbook-midnight', name: 'MacBook · Midnight',
-  lid: '#2b3442', badge: 'glow', badgeColor: '#c3ccd8' }
+var B = window.PetBody;   // pet-body.js, en la raíz
+
+B.torso        // el path de la silueta — usalo tal cual
+B.belly        // el path del frente
+B.TORSO_TOP    // 162 — de acá para abajo es de todos
+B.HEAD_BOTTOM  // 186 — hasta acá te llega la cabeza
+B.HANDS        // dónde van tus manos sobre el teclado
+B.clipRect     // el recorte contra el borde de abajo
 ```
 
-Tu avatar dibuja **la silueta** de la notebook y le pide al device la tapa y el
-logo:
+Si querés estilizar las proporciones — el pingüino se angosta un 5 % para no
+verse rechoncho — aplicá la transformación **sólo a tu cabeza**. Al torso no.
+
+### 2. El avatar no dibuja la computadora
+
+La máquina es un objeto aparte que **se dibuja solo**. Tu avatar deja un `<g>`
+vacío y el device se pinta adentro:
 
 ```js
-svg.style.setProperty('--mi-tapa', dev.lid);
-slot.innerHTML = window.PetDevices.badgeMarkup(dev, cx, cy);
+window.PetDevices.injectStyle(document);
+window.PetDevices.applyTo(svg, dev);              // colores
+slot.innerHTML = window.PetDevices.markup(dev);   // tapa y logo, enteros
 ```
 
-Si el avatar no usa notebook (un robot que es la computadora, por ejemplo),
-ignorá `device` y no expongas `setDevice`.
+Lo único tuyo son **las manos**, porque son del personaje: van en
+`PetBody.HANDS`, que es donde el device dibujó el teclado.
+
+Esto es justamente lo que el torso canónico habilita: con un cuerpo fijo,
+cualquier máquina calza en cualquier avatar sin que ninguno sepa del otro.
+
+Si tu personaje no usa computadora — un robot que *es* la computadora —
+ignorá `device`, no dejes el hueco y no expongas `setDevice`.
 
 ## Reglas de dibujo que no son negociables
 
@@ -127,6 +153,7 @@ Romper cualquiera de estas se nota en la ventana, no en el código:
 | | |
 |---|---|
 | **Cuadrado** | El pet reserva una caja cuadrada (152, 182 o 224 px). Un dibujo más alto que ancho se ve corrido. |
+| **Torso canónico** | El cuerpo sale de `PetBody`, sin copiarlo ni retocarlo. Tu libertad empieza en `PetBody.HEAD_BOTTOM`. |
 | **Apoyado abajo** | El borde inferior se apoya sobre la barra de tareas. El aire va arriba, nunca abajo. |
 | **Escalable** | Se monta a 152 y a 224 px sin retocar. SVG, o canvas que lea su tamaño. |
 | **Transparente de verdad** | Las partes vacías tienen que dejar pasar el mouse. En SVG sale gratis (`visiblePainted`); en canvas el rectángulo entero ataja el puntero y el hover se activa pasando cerca. |

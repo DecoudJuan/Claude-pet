@@ -168,11 +168,15 @@ ningún lado, lo encuentra en un registro.
 Sumar uno es un archivo que se registra y cuatro métodos que cumplir
 (`setState`, `look`, `poke`, `destroy`). El panel se llena solo.
 
-La **notebook** es un dato aparte, con su propio registro: vienen diez —
-MacBook en tres colores, ThinkPad, IdeaPad, HP, Dell, Samsung — y un avatar
-nuevo las hereda todas sin escribir una línea. A ese tamaño lo que distingue
-una máquina de otra es el color de la tapa y el logo, así que agregar «la HP
-gris» o «la MacBook midnight» es una línea.
+La **notebook** es un objeto aparte, no un adorno del avatar: **se dibuja
+sola**. El avatar deja un hueco y el device se pinta adentro — tapa, logo y
+todo. Vienen diez: MacBook en tres colores, ThinkPad, IdeaPad, HP, Dell,
+Samsung y una sin marca.
+
+Eso funciona porque **el cuerpo es canónico**: de la clavícula para abajo todos
+los avatares son idénticos, misma forma y mismo tamaño, así que cualquier
+máquina calza en cualquier avatar sin que ninguno sepa del otro. Lo que cambia
+de un avatar a otro es la cabeza, la cara, los colores y los accesorios.
 
 **→ [Cómo crear e importar avatares](AVATARS.md)**
 
@@ -188,9 +192,12 @@ los estados, el contrato y los errores que rompen la ventana:
 
 ```
 Claude-pet/
-├── penguin-mascot.js     El avatar que viene incluido. Un SVG a mano, sin
-│                         dependencias y sin API de imágenes. Sirve solo en
-│                         cualquier página web, sin nada del pet.
+├── pet-body.js           El cuerpo canónico: el torso que comparten todos los
+│                         avatares y los puntos donde se apoyan la notebook y
+│                         las manos. La geometría se pide, no se copia.
+├── penguin-mascot.js     El avatar que viene incluido. Un SVG a mano, sin API
+│                         de imágenes. Sirve en cualquier página web, sin nada
+│                         del pet.
 ├── index.html            Demo del avatar suelto: las paletas y cómo montarlo
 │                         en tu propia página.
 ├── AVATARS.md            El contrato de avatares y cómo sumar uno.
@@ -212,7 +219,7 @@ Claude-pet/
     ├── avatars.js        El registro de avatares y su contrato.
     ├── avatars/
     │   └── penguin.js    El pingüino, envuelto como avatar.
-    ├── devices.js        El registro de notebooks.
+    ├── devices.js        El registro de notebooks, y la silueta que dibujan.
     ├── devices/
     │   └── laptops.js    Las diez que vienen de fábrica.
     └── package.json

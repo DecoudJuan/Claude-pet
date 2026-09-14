@@ -56,17 +56,51 @@ Opcional:
 
 ### La notebook no es del avatar
 
-La máquina viene de un registro aparte (`PetDevices`) y la elige el usuario, así
-que un avatar nuevo hereda las diez que ya existen sin escribir una línea. El
-avatar dibuja **la silueta**; el device pone la tapa y el logo:
+La máquina se dibuja sola. Tu avatar **no dibuja ninguna computadora**: deja un
+`<g>` vacío y el device se pinta adentro.
 
 ```js
-svg.style.setProperty('--mi-tapa', dev.lid);
-slot.innerHTML = window.PetDevices.badgeMarkup(dev, cx, cy);
+window.PetDevices.injectStyle(document);
+window.PetDevices.applyTo(svg, dev);      // los colores, por custom properties
+slot.innerHTML = window.PetDevices.markup(dev);   // tapa y logo, enteros
 ```
 
+Lo único tuyo son **las manos**, porque son del personaje. Van en
+`PetBody.HANDS`, que es donde el device dibujó el teclado.
+
 Si tu avatar no usa notebook — un robot que *es* la computadora, por ejemplo —
-ignorá `device` y no expongas `setDevice`.
+ignorá `device`, no dejes el hueco y no expongas `setDevice`.
+
+---
+
+## El cuerpo es canónico
+
+**De la clavícula para abajo, todos los avatares son idénticos.** Misma forma,
+mismo tamaño, mismos anclajes. Lo que cambia es de ahí para arriba: cabeza,
+cara, colores, accesorios.
+
+No es una regla estética. Es lo que permite que la notebook sea un objeto
+aparte: con un torso fijo, cualquier máquina calza en cualquier avatar sin que
+ninguno de los dos sepa nada del otro. Si cada uno dibujara su propio torso, el
+device tendría que adivinar dónde apoyarse y las manos no llegarían al teclado.
+
+La geometría **no se copia, se pide** — así no puede desviarse por transcribirla
+mal:
+
+```js
+var B = window.PetBody;
+
+B.torso        // el path de la silueta
+B.belly        // el path del frente
+B.TORSO_TOP    // 162 — de acá para abajo es de todos
+B.HEAD_BOTTOM  // 186 — hasta acá llega tu cabeza
+B.DEVICE       // dónde se dibuja la máquina
+B.HANDS        // dónde van tus manos sobre el teclado
+B.clipRect     // el recorte contra el borde de abajo
+```
+
+El pingüino le aplica un `scale(0.95 1)` a **su cabeza** para verse menos
+rechoncho. Al torso no: eso sería desviarse del canon.
 
 ### Los tres estados
 
