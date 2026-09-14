@@ -140,14 +140,22 @@ diálogo, que es del pet, no del avatar. En `done` sí le pega un `poke()`.
 
 ## Sumar uno
 
-**1. El archivo.** `avatars/zorro/avatar.js`, con el `register()` de arriba.
+**1. La carpeta.** `avatars/zorro/`, con el dibujo y el `register()` separados
+como en el pingüino:
 
-**2. El `<script>`.** En `app/window.html`, junto a los otros:
+```
+avatars/zorro/
+├── draw.js      el dibujo — no sabe que el pet existe
+└── avatar.js    el register() de arriba
+```
+
+**2. Los `<script>`.** En `app/window.html`, en la sección de catálogo:
 
 ```html
-<script src="avatars.js"></script>
-<script src="avatars/penguin.js"></script>
-<script src="avatars/zorro.js"></script>   <!-- el tuyo -->
+<script src="../avatars/penguin/draw.js"></script>
+<script src="../avatars/penguin/avatar.js"></script>
+<script src="../avatars/zorro/draw.js"></script>     <!-- el tuyo -->
+<script src="../avatars/zorro/avatar.js"></script>
 ```
 
 **3. Listo.** El panel de ajustes lee el registro solo: el selector de avatares

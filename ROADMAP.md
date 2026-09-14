@@ -98,6 +98,22 @@ que se rompió.
 - **Click-through**: la ventana ignora el mouse salvo sobre algo pintado, así
   que no tapa clicks del escritorio.
 
+### 10. El cuerpo canónico y los módulos
+
+- **El device se dibuja solo.** Antes aportaba color y logo pero la silueta la
+  dibujaba el avatar, así que cada avatar nuevo tenía que inventar su propia
+  notebook. Ahora la máquina es un objeto entero y el avatar sólo le presta el
+  hueco; lo único suyo son las manos.
+- **El cuerpo es canónico.** De la clavícula para abajo todos los avatares son
+  idénticos, servidos por `core/body.js`. La geometría se pide, no se copia.
+  Eso es lo que permite que cualquier máquina calce en cualquier avatar.
+- **La cabeza tiene caja y los accesorios tienen techo.** La forma del cráneo
+  es libre; el tamaño no. Orejas, cuernos o colas pueden salirse, hasta el
+  borde del viewBox.
+- **Cinco módulos** con las dependencias en un solo sentido: `core` no sabe de
+  nadie, `avatars` y `devices` dependen de `core`, `app` los usa a los tres y es
+  el único que sabe de Claude Code, `demo` monta un avatar suelto.
+
 ---
 
 ## Falta
