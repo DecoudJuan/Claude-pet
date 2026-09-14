@@ -31,8 +31,11 @@ una esquina del escritorio y te lo dice sin que la mires.
   como si estuviera buscando la idea. Alterna solo, con tiempos irregulares.
 - **Te avisa cuando termina** con un globo de diálogo: el proyecto y cuánto
   tardó. Y pega un salto, por si no lo estabas mirando.
-- **Te avisa cuando te espera**, que es el caso que más caro sale: Claude Code
-  pidió permiso y el turno está frenado hasta que contestes.
+- **Te avisa cuando te espera**, que es el caso que más caro sale: el turno está
+  frenado hasta que contestes. El globo dice *qué* está pidiendo — «Claude needs
+  your permission to use Bash» — y cabecea cada tantos segundos para que se note
+  de reojo. El pingüino no guarda la notebook: sigue a mitad de tarea, despega
+  las aletas del teclado y te busca a vos.
 - **Sigue el mouse por toda la pantalla** cuando no está laburando. No sólo
   dentro de su ventana: el proceso principal le pasa la posición global del
   cursor, así que te mira desde la esquina.
