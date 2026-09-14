@@ -139,14 +139,26 @@ que se rompió.
   callada y sigue trabajando. Si la última entrada es una tool que no devolvió,
   el turno sigue vivo — hasta los 3 minutos, donde se corta igual.
 
+### 13. Empaquetado y release
+
+- **Instaladores para los tres sistemas**: `.exe` e instalador para Windows,
+  `.dmg` para macOS en Apple Silicon e Intel, `.AppImage` y `.deb` para Linux.
+- **Cada plataforma se compila en la suya.** Un `.dmg` necesita macOS: no es
+  una limitación del proyecto sino del formato. Por eso el release se arma en
+  GitHub Actions con un runner por sistema.
+- **El paquete se movió a la raíz.** electron-builder no puede empaquetar nada
+  fuera de su directorio, y la app usa `core/`, `avatars/` y `devices/`.
+- **El hook encuentra la app instalada** por un `app-path.json` que la ventana
+  escribe en cada arranque: empaquetada no hay `node_modules` al lado del hook.
+- **Botón derecho → copiar configuración de hooks.** Instalada desde un `.exe`
+  nadie sabe dónde quedó `hook.js`; la app arma el bloque con sus propias rutas.
+- **Electron al día.** La versión que traíamos tenía avisos de severidad alta;
+  actualizar a la última los deja en cero. Es la dependencia que define la
+  superficie de ataque del proyecto.
+
 ---
 
 ## Falta
-
-### Empaquetarlo
-
-Hoy corre con Electron desde el repo. Falta un `.exe` (y sus equivalentes) para
-que instalarlo no sea clonar y `npm install`.
 
 ### Más avatares
 

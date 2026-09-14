@@ -27,6 +27,7 @@ const ROOT = path.join(
 const DIR = path.join(ROOT, 'sessions');
 const LOCK = path.join(ROOT, 'pet.lock');
 const MUTED = path.join(ROOT, 'muted');   // lo cerraste a mano: no lo resucites
+const APP_PATH = path.join(ROOT, 'app-path.json');   // dónde quedó instalada
 
 const KIND = process.argv[2] || 'working';
 
@@ -113,18 +114,41 @@ function ensurePet() {
   if (petAlive()) return;
   if (fs.existsSync(MUTED)) return;   // salió por el menú: respetalo
 
-  const bin = path.join(
-    __dirname, 'node_modules', 'electron', 'dist',
-    process.platform === 'win32' ? 'electron.exe' : 'electron'
-  );
-  if (!fs.existsSync(bin)) return;   // sin npm install no hay nada que abrir
+  const launch = resolveApp();
+  if (!launch) return;   // ni instalada ni clonada: no hay nada que abrir
 
-  const child = spawn(bin, [__dirname, '--auto'], {
+  const child = spawn(launch.bin, launch.args, {
     detached: true,
     stdio: 'ignore',
     windowsHide: true
   });
   child.unref();
+}
+
+/*
+ * Dos maneras de estar instalado:
+ *   - empaquetada: el ejecutable se anuncia en app-path.json al arrancar
+ *   - desde el repo: el electron de node_modules, con la raíz como argumento
+ */
+function resolveApp() {
+  try {
+    const p = JSON.parse(fs.readFileSync(APP_PATH, 'utf8'));
+    if (p.packaged && p.exe && fs.existsSync(p.exe)) return { bin: p.exe, args: ['--auto'] };
+    if (p.root && fs.existsSync(p.root)) {
+      const b = electronIn(p.root);
+      if (b) return { bin: b, args: [p.root, '--auto'] };
+    }
+  } catch (e) { /* todavía nunca arrancó */ }
+
+  const root = path.join(__dirname, '..');
+  const b = electronIn(root);
+  return b ? { bin: b, args: [root, '--auto'] } : null;
+}
+
+function electronIn(root) {
+  const bin = path.join(root, 'node_modules', 'electron', 'dist',
+    process.platform === 'win32' ? 'electron.exe' : 'electron');
+  return fs.existsSync(bin) ? bin : null;
 }
 
 function petAlive() {

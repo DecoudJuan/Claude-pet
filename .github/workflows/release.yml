@@ -1,0 +1,73 @@
+name: release
+
+# Windows se puede compilar desde cualquier lado, pero macOS y Linux no: un .dmg
+# necesita macOS y un AppImage necesita Linux. Por eso cada plataforma se
+# construye en su propio runner y los tres suben al mismo release.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: --win
+            artifacts: 'release/*.exe'
+          - os: macos-latest
+            target: --mac
+            artifacts: 'release/*.dmg release/*.zip'
+          - os: ubuntu-latest
+            target: --linux
+            artifacts: 'release/*.AppImage release/*.deb'
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Compilar
+        run: npx electron-builder ${{ matrix.target }} --publish never
+        env:
+          # Sin firmar: no hay certificado de Apple ni de Windows. El README
+          # explica qué hacer con el aviso del sistema.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}
+          path: |
+            release/*.exe
+            release/*.dmg
+            release/*.zip
+            release/*.AppImage
+            release/*.deb
+          if-no-files-found: ignore
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Publicar en el release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**/*
+          fail_on_unmatched_files: false

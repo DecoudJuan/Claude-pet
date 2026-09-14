@@ -7,7 +7,7 @@
  */
 'use strict';
 
-const { app, BrowserWindow, ipcMain, screen, Menu, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, Menu, shell, clipboard, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -36,6 +36,9 @@ const ROOT = path.join(
 const STATE_DIR = path.join(ROOT, 'sessions');
 const LOCK = path.join(ROOT, 'pet.lock');
 const MUTED = path.join(ROOT, 'muted');
+// Empaquetada, el hook no tiene forma de saber dónde quedó instalada la app:
+// no hay node_modules al lado suyo. Se lo dejamos escrito en cada arranque.
+const APP_PATH = path.join(ROOT, 'app-path.json');
 
 // Lanzado por el hook SessionStart: vive mientras haya sesiones de Claude Code.
 // Arrancado a mano (npm start) se queda hasta que lo cierres vos.
@@ -284,8 +287,16 @@ function createWindow() {
 
   // La ventana no tiene dónde mostrar un error: sin esto, un fallo del renderer
   // es una ventana muda y no hay forma de enterarse.
-  win.webContents.on('console-message', function (_e, level, message, line, source) {
-    if (level >= 2) console.error('[pet] ' + source + ':' + line + ' ' + message);
+  // La firma cambió en Electron 37: antes (event, level, message, line, source)
+  // con level numérico, ahora un solo objeto con level de texto. Soporta las dos
+  // para que actualizar Electron no vuelva a dejar la ventana muda.
+  win.webContents.on('console-message', function (a, level, message, line, source) {
+    const e = (a && typeof a === 'object' && 'level' in a) ? a : null;
+    const lvl = e ? e.level : level;
+    const bad = lvl === 'error' || lvl === 'warning' || (typeof lvl === 'number' && lvl >= 2);
+    if (!bad) return;
+    const where = (e ? (e.sourceId + ':' + e.lineNumber) : (source + ':' + line));
+    console.error('[pet] ' + where + ' ' + (e ? e.message : message));
   });
   win.webContents.on('render-process-gone', function (_e, d) {
     console.error('[pet] el renderer se cayó: ' + d.reason);
@@ -400,6 +411,40 @@ ipcMain.on('close-pet', function () {
   app.quit();
 });
 
+// Instalada desde un .exe, nadie sabe dónde quedó hook.js. En vez de hacerte
+// buscarlo, la app arma el bloque con sus propias rutas y te lo deja en el
+// portapapeles listo para pegar.
+function hookPath(name) {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, name)
+    : path.join(__dirname, name);
+}
+
+// settings.json es JSON: una ruta de Windows con backslashes habría que
+// escaparla dos veces. Con barras normales funciona igual y se lee.
+function toPosix(p) { return p.split(path.sep).join('/'); }
+
+function hooksConfig() {
+  const h = toPosix(hookPath('hook.js'));
+  const one = function (arg, timeout) {
+    return [{ hooks: [{ type: 'command', command: 'node "' + h + '" ' + arg, async: true, timeout: timeout || 5 }] }];
+  };
+  return JSON.stringify({
+    hooks: {
+      SessionStart: one('start', 10),
+      UserPromptSubmit: one('working'),
+      Notification: one('waiting'),
+      Stop: one('done'),
+      StopFailure: one('done'),
+      SessionEnd: one('end')
+    },
+    statusLine: {
+      type: 'command',
+      command: 'node "' + toPosix(hookPath('statusline.js')) + '"'
+    }
+  }, null, 2);
+}
+
 ipcMain.on('menu', function () {
   if (!win) return;
   Menu.buildFromTemplate([
@@ -419,6 +464,24 @@ ipcMain.on('menu', function () {
       click: function (item) { win.setAlwaysOnTop(item.checked, 'screen-saver'); }
     },
     { type: 'separator' },
+    {
+      label: 'Copiar configuración de hooks',
+      click: function () {
+        clipboard.writeText(hooksConfig());
+        dialog.showMessageBox(win, {
+          type: 'info',
+          title: 'Copiado',
+          message: 'La configuración está en el portapapeles.',
+          detail: [
+            'Pegala dentro de ~/.claude/settings.json.',
+            '',
+            'Si ya tenías un statusLine propio no lo pises: pasáselo a este como',
+            'delegado, con -- adelante del tuyo.'
+          ].join('\n'),
+          buttons: ['Listo']
+        });
+      }
+    },
     {
       label: 'Abrir carpeta de estado',
       click: function () { shell.openPath(STATE_DIR); }
@@ -449,6 +512,15 @@ if (!single) {
   app.whenReady().then(function () {
     confPath = path.join(app.getPath('userData'), 'pet.json');
     try { fs.mkdirSync(STATE_DIR, { recursive: true }); } catch (e) { /* ya existe */ }
+    try {
+      fs.writeFileSync(APP_PATH, JSON.stringify({
+        exe: process.execPath,
+        packaged: app.isPackaged,
+        root: app.isPackaged ? null : path.join(__dirname, '..'),
+        version: app.getVersion(),
+        writtenAt: Date.now()
+      }));
+    } catch (e) { /* el hook tiene un plan B */ }
     try { fs.writeFileSync(LOCK, JSON.stringify({ pid: process.pid, startedAt: bootAt })); } catch (e) { /* el hook igual tiene el single-instance lock de respaldo */ }
     createWindow();
   });

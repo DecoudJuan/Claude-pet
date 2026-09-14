@@ -1,0 +1,108 @@
+{
+  "name": "claude-pet",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Una mascota de escritorio que refleja el estado de Claude Code.",
+  "main": "app/main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^44.3.0",
+    "electron-builder": "^26.15.3"
+  },
+  "productName": "Claude Pet",
+  "author": {
+    "name": "Juan Decoud",
+    "email": "decoudjuanmanuel1@gmail.com"
+  },
+  "homepage": "https://github.com/DecoudJuan/Claude-pet",
+  "license": "MIT",
+  "build": {
+    "appId": "ar.decoud.claudepet",
+    "productName": "Claude Pet",
+    "copyright": "Copyright © 2026 Juan Decoud",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "app/**/*",
+      "core/**/*",
+      "avatars/**/*",
+      "devices/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "app/hook.js",
+        "to": "hook.js"
+      },
+      {
+        "from": "app/statusline.js",
+        "to": "statusline.js"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "shortcutName": "Claude Pet"
+    },
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ]
+    },
+    "linux": {
+      "category": "Development",
+      "maintainer": "Juan Decoud <decoudjuanmanuel1@gmail.com>",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
+  }
+}

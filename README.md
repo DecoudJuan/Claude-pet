@@ -80,30 +80,69 @@ par `UserPromptSubmit` / `Stop`.
 
 ## Instalar
 
-**No es un `.exe`.** Todavía no: hoy corre con Electron desde el repo. Empaquetarlo
-está en el [roadmap](ROADMAP.md).
+### Con el instalador
+
+Bajá el de tu sistema desde
+[**releases**](https://github.com/DecoudJuan/Claude-pet/releases/latest):
+
+| | |
+|---|---|
+| **Windows** | `Claude Pet Setup x.y.z.exe` — instalador. O `Claude Pet x.y.z.exe`, portable, que no instala nada. |
+| **macOS** | `.dmg` — hay uno para Apple Silicon (arm64) y otro para Intel (x64). |
+| **Linux** | `.AppImage` para cualquier distro, o `.deb` para Debian y Ubuntu. |
+
+**No están firmados**, porque firmar cuesta plata: un certificado de Apple son
+99 USD al año y uno de Windows unos 200. Así que el sistema te va a avisar la
+primera vez.
+
+- **Windows** — «Windows protegió tu PC» → *Más información* → *Ejecutar de
+  todas formas*.
+- **macOS** — click derecho sobre la app → *Abrir* → *Abrir*. Con doble click
+  no te deja; con click derecho sí.
+- **Linux** — al AppImage hay que darle permiso: `chmod +x Claude*.AppImage`.
+
+Si eso te incomoda, compilalo vos: las instrucciones están abajo y el resultado
+es el mismo binario.
+
+### Desde el código
 
 ```bash
 git clone https://github.com/DecoudJuan/Claude-pet.git
-cd Claude-pet/app
+cd Claude-pet
 npm install
+npm start
 ```
 
 Necesita Node 18+. `npm install` baja Electron, que son unos 200 MB.
 
-Para probarlo suelto, sin Claude Code:
-
-```bash
-npm start
-```
-
 Arrancado así se queda hasta que lo cierres vos. Lanzado por el hook se cierra
 solo cuando no quedan sesiones.
+
+### Compilar tu propio ejecutable
+
+Es lo que vas a querer si le agregás un avatar:
+
+```bash
+npm run dist          # el de tu sistema operativo
+npx electron-builder --win     # o el que quieras, con sus límites
+```
+
+Los binarios salen en `release/`.
+
+**Cada sistema compila el suyo.** Un `.dmg` necesita macOS y un `.AppImage`
+necesita Linux — no es una limitación nuestra sino de los formatos. Por eso los
+releases se arman en GitHub Actions, una plataforma por runner: está en
+`.github/workflows/release.yml` y se dispara con un tag `v*`.
 
 ## Configurar
 
 Los hooks van en `~/.claude/settings.json` y afectan a todas tus sesiones.
-Cambiá la ruta por la tuya:
+
+**Si lo instalaste, no busques la ruta a mano:** botón derecho sobre el pet →
+*Copiar configuración de hooks*. La app arma el bloque con sus propias rutas y
+te lo deja en el portapapeles, listo para pegar.
+
+Si trabajás desde el repo, cambiá la ruta por la tuya:
 
 ```json
 {
@@ -195,6 +234,28 @@ activaría con sólo pasar cerca. Así que vive ignorando el mouse
 sólo cuando el puntero está sobre algo **pintado**: la caja del avatar tiene
 `pointer-events: none` y los trazos del SVG `visiblePainted`, así que
 `elementFromPoint` devuelve al avatar únicamente si estás encima de él.
+
+## Un avatar propio, y tu propio ejecutable
+
+El circuito completo, que es la razón por la que el repo importa tanto como el
+instalador:
+
+```bash
+git clone https://github.com/DecoudJuan/Claude-pet.git
+cd Claude-pet && npm install
+
+# 1. tu avatar: una carpeta con el dibujo y su registro
+#    avatars/<id>/draw.js  y  avatars/<id>/avatar.js
+# 2. los dos <script> en app/window.html
+# 3. probalo suelto, sin Electron, abriendo demo/index.html
+npm start             # 4. y en la ventana de verdad
+
+npm run dist          # 5. tu propio instalador, con tu avatar adentro
+```
+
+El paso 1 no lo hacés a ciegas: el repo trae una skill que le explica a Claude
+Code qué tiene que comunicar cada estado y qué reglas de dibujo rompen la
+ventana. Ver [AVATARS.md](AVATARS.md).
 
 ## Avatares y notebooks
 
