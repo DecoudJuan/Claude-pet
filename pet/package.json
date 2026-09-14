@@ -1,0 +1,13 @@
+{
+  "name": "claude-pet",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pingüino de escritorio que muestra si Claude Code está laburando y avisa cuando termina.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^33.2.0"
+  }
+}
