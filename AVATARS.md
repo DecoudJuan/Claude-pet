@@ -32,6 +32,7 @@ window.PetAvatars.register({
 | Opción | |
 |---|---|
 | `palette` | El id de paleta elegido, o `null` si el avatar no declara ninguna. |
+| `device` | La notebook elegida — `{ id, name, lid, badge, badgeColor }` — o `null`. Ver abajo. |
 | `pointer` | Siempre `'manual'`. El avatar **no** debe escuchar el mouse por su cuenta: la posición se la inyecta el pet con `look()`, porque es la del cursor en toda la pantalla, no la de la ventana. |
 | `interactive` | Siempre `false`. El click y el arrastre los maneja el pet. |
 | `label` | Texto para el `aria-label`. |
@@ -50,7 +51,22 @@ Opcional:
 | | |
 |---|---|
 | `setPalette(id)` | Cambiar de tinta sin remontar. Si no está, el pet remonta el avatar entero. |
+| `setDevice(dev)` | Cambiar de notebook sin remontar. Si no está, el pet remonta. |
 | `element` | El nodo raíz, cómodo para tests. |
+
+### La notebook no es del avatar
+
+La máquina viene de un registro aparte (`PetDevices`) y la elige el usuario, así
+que un avatar nuevo hereda las diez que ya existen sin escribir una línea. El
+avatar dibuja **la silueta**; el device pone la tapa y el logo:
+
+```js
+svg.style.setProperty('--mi-tapa', dev.lid);
+slot.innerHTML = window.PetDevices.badgeMarkup(dev, cx, cy);
+```
+
+Si tu avatar no usa notebook — un robot que *es* la computadora, por ejemplo —
+ignorá `device` y no expongas `setDevice`.
 
 ### Los tres estados
 

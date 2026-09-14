@@ -64,14 +64,33 @@ que se rompió.
 - **Un `pet.lock` con el PID** evita levantar un Electron al pedo por cada
   sesión nueva.
 
-### 6. El sistema de avatares
+### 6. Notebooks intercambiables
+
+- **Registro aparte del de avatares.** La máquina sobre la que trabaja el
+  avatar es un dato del usuario, no del dibujo: un avatar nuevo hereda las diez
+  que existen sin escribir una línea.
+- **Son colores, no siluetas.** A 60 px de tapa, lo que distingue una MacBook
+  de una ThinkPad es el color y el logo. Por eso sumar «la HP gris» cuesta una
+  línea, y por eso si alguna vez hace falta una silueta propia conviene que sea
+  un avatar, no un device.
+- Diez de fábrica: MacBook en tres colores, ThinkPad, IdeaPad, HP en dos,
+  Samsung, Dell y una sin marca.
+
+### 7. Skills para diseñar
+
+- **`avatar-designer`** y **`device-designer`** en `.claude/skills/`. Cuando
+  otro usa Claude Code para dibujar un avatar, su Claude lee qué tiene que
+  comunicar cada estado — no sólo qué métodos exponer — y los errores de dibujo
+  que rompen la ventana.
+
+### 8. El sistema de avatares
 
 - **Registro con contrato** (`setState` / `look` / `poke` / `destroy`). El pet
   no menciona al pingüino por nombre en ningún lado.
 - **El panel se llena solo** desde el registro: avatares y paletas.
 - Documentado en [AVATARS.md](AVATARS.md).
 
-### 7. Los controles
+### 9. Los controles
 
 - **Aparecen al pasar por encima del dibujo**, no del rectángulo de la ventana.
 - **Panel de ajustes** con tamaño, avatar y paleta. Mide siempre lo mismo en
@@ -101,8 +120,8 @@ que instalarlo no sea clonar y `npm install`.
 
 ### Más avatares
 
-El sistema está listo y documentado, pero por ahora hay uno solo. El pingüino
-es la prueba de que el contrato alcanza.
+El sistema está listo, documentado y con skills que lo enseñan, pero por ahora
+hay un avatar solo. El pingüino es la prueba de que el contrato alcanza.
 
 ### Ideas sueltas
 

@@ -6,6 +6,9 @@
 mientras itera, levanta la vista cuando piensa, y te saca un globo de diálogo
 cuando termina — así dejás de mirar la terminal para ver si ya está.**
 
+**El avatar es tuyo.** Viene con un pingüino, pero el dibujo es un módulo
+aparte: cualquiera puede escribir el suyo y elegirlo desde el panel.
+
 [![License: MIT](https://img.shields.io/badge/license-MIT-d9b45f)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20·%20macOS%20·%20Linux-1f2430)](#instalar)
 [![Runtime](https://img.shields.io/badge/runtime-Electron-4a6fa5)](pet/package.json)
@@ -20,13 +23,13 @@ después volvés a mirar: seguía trabajando. Volvés otra vez: había terminado
 hace tres minutos, o peor, te está esperando desde hace tres minutos porque
 pidió permiso para algo.
 
-La terminal ya te lo dice, pero sólo si la estás mirando. Este pingüino vive en
+La terminal ya te lo dice, pero sólo si la estás mirando. Esta mascota vive en
 una esquina del escritorio y te lo dice sin que la mires.
 
 ## Qué hace
 
-- **Teclea mientras Claude Code itera.** Saca una notebook, clava los ojos en
-  el teclado y tipea con las dos aletas.
+- **Teclea mientras Claude Code itera.** Saca la notebook, clava los ojos en el
+  teclado y tipea.
 - **Levanta la vista cuando piensa.** Cada tanto deja de tipear y mira al techo,
   como si estuviera buscando la idea. Alterna solo, con tiempos irregulares.
 - **Te avisa cuando termina** con un globo de diálogo: el proyecto y cuánto
@@ -34,13 +37,14 @@ una esquina del escritorio y te lo dice sin que la mires.
 - **Te avisa cuando te espera**, que es el caso que más caro sale: el turno está
   frenado hasta que contestes. El globo dice *qué* está pidiendo — «Claude needs
   your permission to use Bash» — y cabecea cada tantos segundos para que se note
-  de reojo. El pingüino no guarda la notebook: sigue a mitad de tarea, despega
-  las aletas del teclado y te busca a vos.
+  de reojo. Y no guarda la notebook: sigue a mitad de tarea, despega las manos
+  del teclado y te busca a vos.
 - **Sigue el mouse por toda la pantalla** cuando no está laburando. No sólo
   dentro de su ventana: el proceso principal le pasa la posición global del
   cursor, así que te mira desde la esquina.
-- **Parpadea**, y una de cada cinco veces parpadea dos veces seguidas.
 - **Se deja tocar.** Un click y salta.
+- **Se elige todo desde el panel**: el avatar, su paleta, la notebook sobre la
+  que trabaja y el tamaño.
 - **Vive lo que dura Claude Code.** Lo abre el hook `SessionStart` y se cierra
   solo 25 segundos después de que se va la última sesión. No arranca con
   Windows ni queda dando vueltas.
@@ -135,13 +139,13 @@ Para sacarlo, borrás el bloque `"hooks"`. El estado queda en
 | **Arrastrar** | Lo llevás a cualquier lado. Se acuerda de dónde lo dejaste. |
 | **Click** sin arrastrar | Lo tocás y salta. |
 | **Hover sobre el dibujo** | Aparecen dos botones apilados al costado. |
-| **⋯** | Panel de ajustes: tamaño, avatar y paleta. |
+| **⋯** | Panel de ajustes: tamaño, avatar, paleta y notebook. |
 | **✕** | Lo cierra. Vuelve en la próxima sesión, no en el próximo prompt. |
 | **Botón derecho** | Menú nativo: volver abajo a la izquierda, sacar el «siempre encima», abrir la carpeta de estado, salir. |
 
 Los botones van a la izquierda y saltan a la derecha si la ventana quedó pegada
-al borde izquierdo de la pantalla. El panel abre **arriba** del pingüino para no
-taparlos, y mide siempre lo mismo (228 × 208) en los tres tamaños.
+al borde izquierdo de la pantalla. El panel abre **arriba** del avatar para no
+taparlos, y mide siempre lo mismo (228 × 254) en los tres tamaños.
 
 ### Por qué no te come los clicks
 
@@ -151,27 +155,46 @@ activaría con sólo pasar cerca. Así que vive ignorando el mouse
 (`setIgnoreMouseEvents(true, { forward: true })`) y el renderer la despierta
 sólo cuando el puntero está sobre algo **pintado**: la caja del avatar tiene
 `pointer-events: none` y los trazos del SVG `visiblePainted`, así que
-`elementFromPoint` devuelve al pingüino únicamente si estás encima de él.
+`elementFromPoint` devuelve al avatar únicamente si estás encima de él.
 
-## Avatares
+## Avatares y notebooks
 
 El pet no sabe dibujar. Le pide a un **avatar** que se monte y le avisa en qué
-estado está Claude Code; el avatar decide cómo se ve eso. Sumar uno nuevo es un
-archivo que se registra y cuatro métodos que cumplir.
+estado está Claude Code; el avatar decide cómo se ve eso. El pingüino es el que
+viene incluido, no el único: en el código del pet no aparece por nombre en
+ningún lado, lo encuentra en un registro.
+
+Sumar uno es un archivo que se registra y cuatro métodos que cumplir
+(`setState`, `look`, `poke`, `destroy`). El panel se llena solo.
+
+La **notebook** es un dato aparte, con su propio registro: vienen diez —
+MacBook en tres colores, ThinkPad, IdeaPad, HP, Dell, Samsung — y un avatar
+nuevo las hereda todas sin escribir una línea. A ese tamaño lo que distingue
+una máquina de otra es el color de la tapa y el logo, así que agregar «la HP
+gris» o «la MacBook midnight» es una línea.
 
 **→ [Cómo crear e importar avatares](AVATARS.md)**
+
+Si vas a diseñar uno con Claude Code, el repo trae dos skills que le explican
+los estados, el contrato y los errores que rompen la ventana:
+
+```
+.claude/skills/avatar-designer/    diseñar un avatar
+.claude/skills/device-designer/    agregar una notebook
+```
 
 ## Estructura
 
 ```
 Claude-pet/
-├── penguin-mascot.js     El dibujo. Un SVG a mano, sin dependencias, sin API de
-│                         imágenes. Sabe seguir el cursor, parpadear, saltar y
-│                         ponerse a tipear. Sirve solo en cualquier página web.
-├── index.html            Demo del componente suelto: las tres paletas y cómo
-│                         montarlo en tu propia página.
+├── penguin-mascot.js     El avatar que viene incluido. Un SVG a mano, sin
+│                         dependencias y sin API de imágenes. Sirve solo en
+│                         cualquier página web, sin nada del pet.
+├── index.html            Demo del avatar suelto: las paletas y cómo montarlo
+│                         en tu propia página.
 ├── AVATARS.md            El contrato de avatares y cómo sumar uno.
 ├── ROADMAP.md            En qué orden se construyó esto y qué falta.
+├── .claude/skills/       Skills para diseñar avatares y notebooks con Claude.
 └── pet/
     ├── main.js           Proceso principal de Electron. La ventana transparente,
     │                     el arrastre, el vigía del directorio de estado, el
@@ -185,11 +208,15 @@ Claude-pet/
     ├── avatars.js        El registro de avatares y su contrato.
     ├── avatars/
     │   └── penguin.js    El pingüino, envuelto como avatar.
+    ├── devices.js        El registro de notebooks.
+    ├── devices/
+    │   └── laptops.js    Las diez que vienen de fábrica.
     └── package.json
 ```
 
-`penguin-mascot.js` no depende de nada del pet: se puede usar en una página
-cualquiera con un `<div>` y dos líneas. El pet es un consumidor más.
+Los avatares no dependen de nada del pet: `penguin-mascot.js` se puede usar en
+una página cualquiera con un `<div>` y dos líneas. El pet es un consumidor más,
+y es la única pieza que sabe de Claude Code.
 
 ## Licencia
 
