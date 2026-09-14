@@ -132,7 +132,10 @@ mandárselo.
 Lo que sí puede, y cuánto te importe depende de dónde lo corras:
 
 - **Consumir CPU** sin techo. En una desktop enchufada es ruido de ventilador;
-  en una notebook a batería es otra cosa.
+  en una notebook a batería es otra cosa. Esto **no se puede acotar por
+  diseño**: un avatar corre en el mismo hilo que la ventana, y no hay forma de
+  ponerle un presupuesto de procesador desde adentro. Lo que sí se puede es
+  notarlo — ver *Consumo* abajo — y cerrarlo con la ✕.
 - **Dibujar cualquier cosa** dentro de su cuadrado, en una ventana que está
   siempre encima de todo lo demás. Incluido texto que parezca decir algo que no
   dice.
@@ -151,6 +154,34 @@ Aun así, antes de instalar uno que no escribiste:
 
 Los colores que declara un device se validan contra un patrón de color antes de
 entrar a una custom property, para que no se cuele otra cosa por ahí.
+
+---
+
+## Consumo
+
+Un adorno que corre todo el día tiene que costar poco, y el punto de partida no
+era bueno: **56 % de un núcleo en reposo**. Hoy está en torno al **13 %**,
+tecleando o quieto, medido sobre los tres procesos de Electron.
+
+Lo que lo bajó, por orden de impacto:
+
+- **El tecleo salta en vez de interpolar** (`steps(1)`). Antes recorría sesenta
+  posiciones por segundo y repintaba el SVG entero en cada una; ahora salta
+  entre dos. De paso se lee mejor: un tecleo es un movimiento seco.
+- **No se toca el DOM si el valor redondeado no cambió.** La ventana es
+  transparente, así que cada repintado le cuesta al compositor mezclar con el
+  escritorio. Cuantizar a media unidad del viewBox — menos de medio píxel en
+  pantalla — corta de raíz los repintados de la deriva del reposo.
+- **El bucle va a 30 cuadros por segundo**, no a 60.
+- **El cursor se sondea más lento cuando está lejos**, y no se manda nada si no
+  se movió.
+
+Si te importa el número, medilo vos: `Get-Process electron` y mirá
+`TotalProcessorTime` antes y después de diez segundos. Es la misma cuenta que
+usamos acá.
+
+Que un avatar propio pueda volver a subirlo es esperable — el presupuesto es de
+quien lo escribe. La skill `avatar-designer` lo dice.
 
 ---
 

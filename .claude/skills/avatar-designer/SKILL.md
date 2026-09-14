@@ -140,6 +140,18 @@ parezca que *mira* en vez de rotar.
 **Ritmos irregulares.** Parpadeo cada 2–6 s, a veces doble. Un ciclo regular se
 nota y molesta.
 
+**Cuidá el procesador: es un adorno que corre todo el día.** La ventana es
+transparente, así que cada repintado le cuesta al compositor mezclar con el
+escritorio, y eso se paga en batería. Tres cosas que bajaron el consumo del
+pingüino de 56 % de un núcleo a 13 %:
+
+- **Animá a pasos, no interpolando,** cuando el movimiento es seco. Un tecleo
+  con `steps(1)` repinta 8 veces por segundo en vez de 60, y además se ve mejor.
+- **No toques el DOM si el valor redondeado no cambió.** Cuantizá a media
+  unidad del viewBox: es menos de medio píxel en pantalla y corta de raíz los
+  repintados de cualquier movimiento lento.
+- **30 cuadros por segundo alcanzan.** Nadie mira de cerca un dibujo de 180 px.
+
 ## Cómo probarlo
 
 `index.html` en la raíz monta el avatar suelto en una página, sin Electron ni
