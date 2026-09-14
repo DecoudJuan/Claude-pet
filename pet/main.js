@@ -273,15 +273,26 @@ function createWindow() {
 
   win.on('closed', function () { win = null; });
 
-  // el cursor de TODA la pantalla, no sólo el de la ventana
+  // El cursor de TODA la pantalla, no sólo el de la ventana. Lejos de la
+  // ventana la mirada ya está en su tope, así que afinar el muestreo no se ve:
+  // se sondea rápido sólo cerca, y el resto del tiempo a un cuarto del ritmo.
+  let lastCursor = '';
   cursorTimer = setInterval(function () {
     if (!win || win.isDestroyed() || !win.isVisible()) return;
-    const p = screen.getCursorScreenPoint();
     const b = win.getBounds();
-    win.webContents.send('cursor', { x: p.x - b.x, y: p.y - b.y });
+    const p = screen.getCursorScreenPoint();
+    const far = p.x < b.x - 500 || p.x > b.x + b.width + 500 ||
+                p.y < b.y - 500 || p.y > b.y + b.height + 500;
+    if (far && (Date.now() % 320) > 80) return;
+
+    const x = p.x - b.x, y = p.y - b.y;
+    const key = x + ',' + y;
+    if (key === lastCursor) return;   // el mouse quieto no genera tráfico
+    lastCursor = key;
+    win.webContents.send('cursor', { x: x, y: y });
   }, 80);
 
-  pollTimer = setInterval(pushState, 400);
+  pollTimer = setInterval(pushState, 600);
   win.webContents.once('did-finish-load', function () {
     const c = readConf();
     win.webContents.send('conf', {

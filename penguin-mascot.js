@@ -71,9 +71,12 @@
     // las aletas van sobre el cuerpo, del mismo color: sin contorno propio
     // desaparecen y no se ve el tecleo.
     '.pm-hand { fill: var(--pm-ink); stroke: var(--pm-frame); stroke-width: 3.5; transform-box: fill-box; transform-origin: 50% 50%; }',
+    // steps(1) en vez de interpolar: el tecleo salta entre dos posiciones en
+    // vez de recorrer sesenta por segundo. Repinta 8 veces por segundo en lugar
+    // de 60 — y encima un tecleo seco se lee mejor que uno suave.
     '@keyframes pm-tap { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3.5px); } }',
-    '.pm.is-working .pm-hand-l { animation: pm-tap .26s ease-in-out infinite; }',
-    '.pm.is-working .pm-hand-r { animation: pm-tap .26s ease-in-out .13s infinite; }',
+    '.pm.is-working .pm-hand-l { animation: pm-tap .26s steps(1, end) infinite; }',
+    '.pm.is-working .pm-hand-r { animation: pm-tap .26s steps(1, end) .13s infinite; }',
     '@media (prefers-reduced-motion: reduce) {',
     '  .pm.is-working .pm-hand-l, .pm.is-working .pm-hand-r { animation: none; }',
     '}',
@@ -289,9 +292,28 @@
 
     var state = 'idle';
 
+    // La ventana es transparente, así que cada repintado le cuesta al
+    // compositor mezclar con el escritorio. Dos frenos: pisamos el bucle a
+    // ~33 ms y, sobre todo, no tocamos el DOM si el valor redondeado no cambió
+    // — con la deriva lenta del estado en reposo, eso es la enorme mayoría de
+    // los cuadros.
+    var STEP_MS = 33;
+    var lastFrameAt = 0;
+    var lastHead = '', lastBody = '', lastPupil = '';
+
+    function q(v) { return (Math.round(v * 2) / 2).toFixed(1); }
+
     var raf = 0;
     function frame(now) {
       if (!alive) return;
+      // A la deriva nada se mueve rápido: 10 cuadros por segundo alcanzan y de
+      // paso el bucle deja de existir para el procesador el resto del tiempo.
+      var drifting = state === 'idle' && now - lastMoveAt > 2600;
+      if (now - lastFrameAt < (drifting ? 100 : STEP_MS)) {
+        raf = requestAnimationFrame(frame);
+        return;
+      }
+      lastFrameAt = now;
 
       if (state === 'working') {
         // clavado en el teclado, con micro-movimiento para que no parezca congelado
@@ -314,15 +336,18 @@
       sx += (tx - sx) * 0.14;
       sy += (ty - sy) * 0.14;
 
-      head.setAttribute('transform',
-        'translate(' + (sx * 8).toFixed(2) + ' ' + (sy * 6).toFixed(2) + ') ' +
-        'rotate(' + (sx * 5).toFixed(2) + ' 120 180)');
-      body.setAttribute('transform',
-        'translate(' + (sx * 3).toFixed(2) + ' ' + (sy * 2).toFixed(2) + ')');
+      // Media unidad del viewBox es menos de medio píxel en pantalla, así que
+      // cuantizar ahí no se ve — y corta de raíz los repintados de la deriva,
+      // que si no cambiaría de valor en cada cuadro para siempre.
+      var h = 'translate(' + q(sx * 8) + ' ' + q(sy * 6) + ') rotate(' + q(sx * 5) + ' 120 180)';
+      var b = 'translate(' + q(sx * 3) + ' ' + q(sy * 2) + ')';
+      var p = 'translate(' + q(sx * 6) + ' ' + q(sy * 5) + ')';
 
-      var px = (sx * 6).toFixed(2), py = (sy * 5).toFixed(2);
-      for (var i = 0; i < pupils.length; i++) {
-        pupils[i].setAttribute('transform', 'translate(' + px + ' ' + py + ')');
+      if (h !== lastHead) { head.setAttribute('transform', h); lastHead = h; }
+      if (b !== lastBody) { body.setAttribute('transform', b); lastBody = b; }
+      if (p !== lastPupil) {
+        for (var i = 0; i < pupils.length; i++) pupils[i].setAttribute('transform', p);
+        lastPupil = p;
       }
 
       raf = requestAnimationFrame(frame);
