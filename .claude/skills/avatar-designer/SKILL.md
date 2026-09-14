@@ -195,6 +195,13 @@ pingüino de 56 % de un núcleo a 13 %:
   repintados de cualquier movimiento lento.
 - **30 cuadros por segundo alcanzan.** Nadie mira de cerca un dibujo de 180 px.
 
+## Por dónde empezar
+
+`AVATARS.md` tiene **un esqueleto completo y mínimo** — torso canónico, hueco
+para la máquina, los cuatro estados — listo para copiar y cambiarle la cabeza.
+Empezá por ahí y no por el pingüino: el pingüino tiene setecientas líneas de
+dibujo y es fácil arrastrar cosas que son suyas y no del sistema.
+
 ## Cómo probarlo
 
 `demo/index.html` monta el avatar suelto en una página, sin Electron ni

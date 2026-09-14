@@ -152,43 +152,106 @@ No hay paso 4. No hay que tocar `main.js`, ni el panel, ni el CSS.
 - **Sin listeners globales.** Con `pointer: 'manual'` el avatar no escucha el
   mouse. Si igual lo hace, va a pelear con el pet por el arrastre.
 
-## Un ejemplo mínimo
+## Un esqueleto que funciona
 
-Un avatar que no dibuja nada, sólo cambia de color según el estado. Sirve para
-arrancar uno nuevo:
+Un avatar completo y mínimo. Cumple las dos reglas — torso canónico y la
+máquina dibujada por el device — y responde a los cuatro estados. Copialo y
+cambiale la cabeza.
 
 ```js
 window.PetAvatars.register({
-  id: 'semaforo',
-  name: 'Semáforo',
-  mount: function (host) {
-    host.innerHTML = '<div class="sem"></div>';
-    var el = host.firstChild;
-    el.style.cssText = 'width:100%;aspect-ratio:1;border-radius:50%;transition:background .3s';
+  id: 'bloque',
+  name: 'Bloque',
 
-    var raf = 0;
+  mount: function (host, opts) {
+    var B = window.PetBody;       // el cuerpo, servido: no lo copies
+    var D = window.PetDevices;    // la máquina, se dibuja sola
+    var uid = 'bl' + Math.random().toString(36).slice(2, 8);   // el clip necesita id único
+
+    host.innerHTML =
+      '<svg viewBox="' + B.VIEWBOX + '" role="img" aria-label="' + opts.label + '">' +
+        '<defs><clipPath id="' + uid + '"><rect x="' + B.clipRect.x + '" y="' + B.clipRect.y +
+          '" width="' + B.clipRect.width + '" height="' + B.clipRect.height + '"/></clipPath></defs>' +
+
+        // --- el torso es de todos ---
+        '<g clip-path="url(#' + uid + ')">' +
+          '<path d="' + B.torso + '" fill="#2b3442"/>' +
+          '<path d="' + B.belly + '" fill="#eef2f6"/>' +
+        '</g>' +
+
+        // --- de acá para arriba, tuyo ---
+        '<g class="head">' +
+          '<circle cx="120" cy="96" r="66" fill="#2b3442"/>' +
+          '<circle cx="98" cy="92" r="10" fill="#fff"/>' +
+          '<circle cx="142" cy="92" r="10" fill="#fff"/>' +
+        '</g>' +
+
+        // --- el hueco de la máquina, y tus manos sobre su teclado ---
+        '<g class="lap" clip-path="url(#' + uid + ')" opacity="0">' +
+          '<ellipse class="hand" cx="' + B.HANDS.left.x + '" cy="' + B.HANDS.left.y +
+            '" rx="' + B.HANDS.rx + '" ry="' + B.HANDS.ry + '" fill="#2b3442"/>' +
+          '<ellipse class="hand" cx="' + B.HANDS.right.x + '" cy="' + B.HANDS.right.y +
+            '" rx="' + B.HANDS.rx + '" ry="' + B.HANDS.ry + '" fill="#2b3442"/>' +
+          '<g class="device"></g>' +
+        '</g>' +
+      '</svg>';
+
+    var svg  = host.firstChild;
+    var head = svg.querySelector('.head');
+    var lap  = svg.querySelector('.lap');
+    var slot = svg.querySelector('.device');
+    var state = 'idle', tx = 0, ty = 0, sx = 0, sy = 0, raf = 0;
+
+    function device(dev) {
+      if (!D) return;
+      D.injectStyle(document);
+      D.applyTo(svg, dev);              // los colores, por custom properties
+      slot.innerHTML = D.markup(dev);   // tapa y logo, enteros
+    }
+    device(opts.device);
+
+    (function loop() {
+      if (state === 'working')       { tx = 0;   ty = 0.9;  }   // mira el teclado
+      else if (state === 'thinking') { tx = 0.5; ty = -0.4; }   // levanta la vista
+      sx += (tx - sx) * 0.14;
+      sy += (ty - sy) * 0.14;
+      head.setAttribute('transform',
+        'translate(' + (sx * 8).toFixed(1) + ' ' + (sy * 6).toFixed(1) + ')');
+      raf = requestAnimationFrame(loop);
+    })();
 
     return {
-      element: el,
       setState: function (s) {
-        el.style.background = s === 'working' ? '#f0951f'
-                            : s === 'thinking' ? '#9fd8ff'
-                            : '#2b6e4f';
+        state = s;
+        // la máquina se ve en todo lo que no sea reposo: waiting sigue a mitad
+        // de tarea, no terminó
+        lap.setAttribute('opacity', s === 'idle' ? 0 : 1);
+        // y en waiting las manos se despegan del teclado
+        lap.querySelectorAll('.hand').forEach(function (h) {
+          h.setAttribute('transform', s === 'waiting' ? 'translate(0 -7)' : '');
+        });
       },
       look: function (x, y) {
-        // mirá el cursor si querés; acá no hacemos nada
+        var r = svg.getBoundingClientRect();
+        var c = function (v) { return Math.max(-1, Math.min(1, v)); };
+        tx = c((x - r.left - r.width / 2) / (r.width * 1.4));
+        ty = c((y - r.top - r.height * 0.44) / (r.height * 1.1));
       },
       poke: function () {
-        el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.15)' }, { transform: 'scale(1)' }], 400);
+        svg.animate([{ transform: 'scale(1)' },
+                     { transform: 'scale(1.08)' },
+                     { transform: 'scale(1)' }], 380);
       },
-      destroy: function () {
-        cancelAnimationFrame(raf);
-        host.innerHTML = '';
-      }
+      destroy: function () { cancelAnimationFrame(raf); host.innerHTML = ''; },
+      setDevice: device
     };
   }
 });
 ```
+
+Lo que **no** hace y deberías sumarle: parpadeo, deriva cuando no hay cursor
+cerca, tecleo animado en `working` y una tinta que se levante sobre fondo
+oscuro. Todo eso está resuelto en `avatars/penguin/draw.js`.
 
 ## El pingüino como referencia
 
