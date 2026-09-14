@@ -11,7 +11,7 @@ un avatar. Vos escribís el avatar.
 
 **Puede ser cualquier cosa.** Un animal, un robot, una taza de café, un
 personaje inventado. El pet no sabe ni le importa qué dibujaste: lo único que
-le pide es que cumpla el contrato y que los cuatro estados se distingan.
+le pide es que cumpla el contrato y que los cinco estados se distingan.
 
 Leé `AVATARS.md` del repo para el contrato completo. Esta skill es el criterio
 de diseño: qué tiene que *comunicar* cada estado, no sólo qué métodos exponer.
@@ -19,7 +19,7 @@ de diseño: qué tiene que *comunicar* cada estado, no sólo qué métodos expon
 ## Antes de dibujar: qué comunica cada estado
 
 Un avatar que no diferencia los estados no sirve para nada — el pet existe
-para que no tengas que mirar la terminal. Estos cuatro **tienen que
+para que no tengas que mirar la terminal. Estos cinco **tienen que
 distinguirse de un vistazo, de reojo, a 150 px**.
 
 ### `idle` — no hay nada corriendo
@@ -78,7 +78,7 @@ window.PetAvatars.register({
   mount: function (host, opts) {
     // opts: { palette, device, pointer: 'manual', interactive: false, label }
     return {
-      setState: function (s) { /* 'idle' | 'working' | 'thinking' | 'waiting' */ },
+      setState: function (s) { /* idle | working | thinking | waiting | sleeping */ },
       look:     function (x, y) { /* cursor relativo a la ventana */ },
       poke:     function () { /* lo tocaron, o terminó un turno */ },
       destroy:  function () { /* soltar timers, listeners y rAF */ },
@@ -104,6 +104,21 @@ sistema. Si tu avatar es muy chico podés juntar los dos, pero perdés eso.
 
 Después, los dos `<script>` en `app/window.html`, en la sección de catálogo. El
 panel de ajustes lee el registro solo: no hay nada más que tocar.
+
+### `sleeping` — se acabaron los tokens
+
+No puede trabajar hasta que se resetee el límite de uso. **No es «terminó» ni
+«descansa entre turnos»**: está bloqueado, y el globo lo dice con la hora a la
+que vuelve.
+
+- **Ojos cerrados**, o el equivalente en tu personaje.
+- **Sin computadora.** Acá sí se guarda: no hay nada que hacer.
+- **No sigue el cursor.** Está durmiendo, no distraído — si te mirara,
+  parecería que espera algo tuyo, y no hay nada que puedas hacer.
+
+> El error a evitar: que se parezca a `idle`. En `idle` puede trabajar y no hay
+> nada pendiente; en `sleeping` no puede, y eso cambia lo que vos hacés
+> después.
 
 ## Dos reglas estructurales que no se negocian
 
@@ -211,7 +226,7 @@ pingüino de 56 % de un núcleo a 13 %:
 ## Por dónde empezar
 
 `AVATARS.md` tiene **un esqueleto completo y mínimo** — torso canónico, hueco
-para la máquina, los cuatro estados — listo para copiar y cambiarle la cabeza.
+para la máquina, los cinco estados — listo para copiar y cambiarle la cabeza.
 Empezá por ahí y no por el pingüino: el pingüino tiene setecientas líneas de
 dibujo y es fácil arrastrar cosas que son suyas y no del sistema.
 
@@ -232,9 +247,10 @@ donde `payload.json` es `{"session_id":"test","cwd":"/ruta/al/proyecto"}`.
 
 - [ ] El torso sale de `PetBody`, sin copiarlo ni retocarlo.
 - [ ] El cráneo entra en `B.HEAD` y los accesorios en `B.LIMITS`.
-- [ ] Los cuatro estados se distinguen a 152 px, de reojo.
+- [ ] Los cinco estados se distinguen a 152 px, de reojo.
 - [ ] `waiting` no se parece a `idle`.
 - [ ] `thinking` no parece que terminó.
+- [ ] `sleeping` no se parece a `idle`.
 - [ ] Nada se mueve en loop perfectamente regular.
 - [ ] `destroy()` suelta el `requestAnimationFrame` y todos los timers.
 - [ ] Las zonas vacías dejan pasar el mouse.

@@ -47,6 +47,12 @@ function run() {
   process.exit(0);
 }
 
+// No intenta ser exhaustivo: si no matchea, el pet simplemente no se duerme.
+function looksLimited(msg) {
+  return /usage limit|rate limit|limit reached|out of tokens|sin tokens|l[ií]mite de uso/i
+    .test(String(msg || ''));
+}
+
 function write() {
   let payload = {};
   try { payload = JSON.parse(input || '{}'); } catch (e) { /* sin payload, seguimos */ }
@@ -78,6 +84,10 @@ function write() {
     // permission to use Bash"). Sin esto el globo sólo puede decir "te espera",
     // que es justo lo que no sirve saber.
     message: KIND === 'waiting' ? String(payload.message || '').slice(0, 160) : '',
+    // Sin statusline no hay forma de saber que se acabaron los tokens, salvo
+    // que Claude Code lo diga en el texto de un aviso. Es un plan B: alcanza
+    // para saber QUE pasó, nunca para saber cuándo vuelve.
+    limited: looksLimited(payload.message) || (prev.limited && KIND !== 'working') || false,
     startedAt: restarting ? now : (prev.startedAt || now),
     finishedAt: KIND === 'done' ? now : null,
     updatedAt: now

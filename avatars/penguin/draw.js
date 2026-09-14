@@ -78,7 +78,23 @@
     '}',
     '.pm-all { transform-box: fill-box; transform-origin: 50% 96%; }',
     '.pm-eye { transform-box: fill-box; transform-origin: 50% 50%; transition: transform .09s ease; }',
-    '.pm.is-blinking .pm-eye { transform: scaleY(.09); }',
+    '.pm.is-blinking .pm-eye, .pm.is-sleeping .pm-eye { transform: scaleY(.09); }',
+    // Durmiendo: una Z que sube. steps(3) en vez de interpolar — el avatar puede
+    // quedarse así horas y no vale repintar 60 veces por segundo por un adorno.
+    '.pm-zzz { fill: var(--pm-ink); font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;',
+    '  font-size: 26px; font-weight: 600; opacity: 0; pointer-events: none;',
+    '  transform-box: fill-box; transform-origin: 50% 50%; }',
+    '@keyframes pm-zzz {',
+    '  0%   { opacity: .85; transform: translate(0, 0) scale(.8); }',
+    '  33%  { opacity: .7;  transform: translate(6px, -14px) scale(1); }',
+    '  66%  { opacity: .35; transform: translate(12px, -28px) scale(1.15); }',
+    '  100% { opacity: 0;   transform: translate(18px, -40px) scale(1.2); }',
+    '}',
+    '.pm.is-sleeping .pm-zzz   { animation: pm-zzz 4.2s steps(3, end) infinite; }',
+    '.pm.is-sleeping .pm-zzz-b { animation-delay: 2.1s; }',
+    '@media (prefers-reduced-motion: reduce) {',
+    '  .pm.is-sleeping .pm-zzz { animation: none; opacity: .6; }',
+    '}',
     '.pm-note {',
     '  fill: var(--pm-beak); font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;',
     '  font-size: 30px; font-weight: 600; opacity: 0;',
@@ -308,7 +324,7 @@
       if (!alive) return;
       // A la deriva nada se mueve rápido: 10 cuadros por segundo alcanzan y de
       // paso el bucle deja de existir para el procesador el resto del tiempo.
-      var drifting = state === 'idle' && now - lastMoveAt > 2600;
+      var drifting = (state === 'idle' && now - lastMoveAt > 2600) || state === 'sleeping';
       if (now - lastFrameAt < (drifting ? 100 : STEP_MS)) {
         raf = requestAnimationFrame(frame);
         return;
@@ -323,6 +339,10 @@
         // mirando arriba a un costado, como buscando la idea
         tx = 0.55 + Math.sin(now / 1900) * 0.14;
         ty = -0.5 + Math.sin(now / 2600) * 0.08;
+      } else if (state === 'sleeping') {
+        // no sigue el cursor: está durmiendo, no distraído
+        tx = 0.06;
+        ty = 0.55;
       } else if (state === 'waiting') {
         // te busca a vos y se queda ahí: si derivara parecería distraído, y es
         // justo el estado en el que necesita que lo mires
@@ -394,13 +414,15 @@
     return {
       element: svg,
       poke: poke,
-      // 'idle' | 'working' | 'thinking' | 'waiting'. working teclea, thinking
-      // mira al techo, waiting suelta el teclado y te busca a vos.
+      // 'idle' | 'working' | 'thinking' | 'waiting' | 'sleeping'. working
+      // teclea, thinking mira al techo, waiting suelta el teclado y te busca a
+      // vos, sleeping cierra los ojos y deja de seguir el cursor.
       setState: function (next) {
         state = next || 'idle';
         svg.classList.toggle('is-working', state === 'working');
         svg.classList.toggle('is-thinking', state === 'thinking');
         svg.classList.toggle('is-waiting', state === 'waiting');
+        svg.classList.toggle('is-sleeping', state === 'sleeping');
       },
       getState: function () { return state; },
       // coordenadas del cursor relativas a la ventana, para pointer: 'manual'

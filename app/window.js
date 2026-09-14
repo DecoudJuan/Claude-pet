@@ -203,6 +203,17 @@
     bubble.classList.remove('show');
   }
 
+  // 19:20, con el formato de reloj del sistema
+  function hora(ms) {
+    if (!ms) return 'pronto';
+    try {
+      // 24 h a propósito: "16:57" entra donde "04:57 p. m." se corta
+      return new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    } catch (e) {
+      return 'pronto';
+    }
+  }
+
   function human(ms) {
     var s = Math.round(ms / 1000);
     if (s < 60) return s + ' s';
@@ -244,8 +255,25 @@
       return;
     }
 
-    avatar.setState('idle');
     bubble.classList.remove('insist');
+
+    if (s.phase === 'sleeping') {
+      avatar.setState('sleeping');
+      // Sólo se afirma la hora si de verdad la sabemos. Sin statusline el pet
+      // se entera de que no hay tokens pero no de cuándo vuelven, y ahí decir
+      // "vuelve a las tantas" sería inventar.
+      if (s.resetsAt) {
+        say('Se quedó sin tokens.', [
+          { text: 'vuelve ' }, { text: hora(s.resetsAt), strong: true },
+          { text: ' · ' + (s.window || '') }
+        ]);
+      } else {
+        say('OOT — Out of Tokens.', [{ text: 'sin statusline no sabe cuándo vuelve' }]);
+      }
+      return;
+    }
+
+    avatar.setState('idle');
 
     if (s.phase === 'waiting') {
       avatar.setState('waiting');
@@ -269,7 +297,7 @@
 
   // mientras trabaja alterna entre teclear (4-9 s) y levantar la vista (2-4 s)
   setInterval(function () {
-    if (phase !== 'working' || !avatar) return;
+    if (phase !== 'working' || !avatar) return;   // dormido y esperando no alternan
     var now = Date.now();
     if (now < swapAt) return;
     swap = swap ? 0 : 1;

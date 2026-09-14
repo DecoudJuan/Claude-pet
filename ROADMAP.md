@@ -114,20 +114,21 @@ que se rompió.
   nadie, `avatars` y `devices` dependen de `core`, `app` los usa a los tres y es
   el único que sabe de Claude Code, `demo` monta un avatar suelto.
 
+### 11. Durmiendo por límite de uso
+
+- **La hora sale del statusline, y de ningún otro lado.** Ningún hook la trae y
+  Claude Code no la guarda: el dato aparece una sola vez, en el JSON que le
+  pasa al comando de statusline. Por eso el pet trae el suyo, que publica la
+  cuota y delega en el que ya tenías.
+- **Sin statusline se entera a medias.** Si Claude Code menciona el límite en
+  el texto de un aviso, el pet se duerme igual pero muestra «OOT» sin hora. No
+  la inventa.
+- **Tiene prioridad sobre todo lo demás**: si no hay tokens, no está
+  trabajando ni terminó — está dormido.
+
 ---
 
 ## Falta
-
-### Estado «durmiendo» por límite de uso
-
-Cuando se acaban los tokens, el pingüino debería dormirse y avisar cuándo
-vuelve: un globo con **`Returns at 14:30`** o **`OOO until 14:30`**, y el
-avatar en pose de siesta.
-
-Lo que hay que resolver antes: de dónde sale la hora de reset. Ninguno de los
-hooks actuales la trae, así que hay que ver si Claude Code la expone por algún
-evento o si hay que leerla de otro lado. Es la parte no trivial; el estado en
-sí es un `setState('sleeping')` más un globo.
 
 ### Empaquetarlo
 

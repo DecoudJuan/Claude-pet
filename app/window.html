@@ -56,9 +56,14 @@
 
   #bubble {
     position: absolute;
-    width: var(--panel-w);
-    left: 50%;
-    margin-left: calc(var(--panel-w) / -2);
+    /* se ajusta al texto en vez de medir siempre lo mismo que el panel: con un
+       aviso corto quedaba medio globo vacío */
+    left: 0;
+    right: 0;
+    margin-inline: auto;
+    width: fit-content;
+    min-width: 136px;
+    max-width: var(--panel-w);
     bottom: calc(var(--avatar) + 10px);
     background: var(--bg);
     color: var(--ink);

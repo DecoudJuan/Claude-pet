@@ -43,6 +43,9 @@ una esquina del escritorio y te lo dice sin que la mires.
 - **Sigue el mouse por toda la pantalla** cuando no está laburando. No sólo
   dentro de su ventana: el proceso principal le pasa la posición global del
   cursor, así que te mira desde la esquina.
+- **Se duerme cuando te quedás sin tokens.** Cierra los ojos, guarda la
+  notebook y avisa a qué hora vuelve. Es el caso donde más molestaba lo
+  contrario: seguir tecleando delante de una terminal que no puede avanzar.
 - **Se deja tocar.** Un click y salta.
 - **Se elige todo desde el panel**: el avatar, su paleta, la notebook sobre la
   que trabaja y el tamaño.
@@ -136,6 +139,38 @@ Para sacarlo, borrás el bloque `"hooks"`. El estado queda en
 `%LOCALAPPDATA%\claude-pets\` y la configuración de la ventana en
 `%APPDATA%\claude-pet\pet.json`.
 
+## El límite de uso
+
+Para que el pet sepa que te quedaste sin tokens hace falta un paso más, y vale
+explicar por qué.
+
+**Ningún hook trae ese dato.** Claude Code tampoco lo guarda en ningún archivo.
+Aparece una sola vez: en el JSON que Claude Code le pasa al comando de
+statusline, como `rate_limits.five_hour.resets_at`. Así que el pet tiene que
+estar en esa cadena.
+
+En `~/.claude/settings.json`:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "node \"C:/ruta/a/Claude-pet/app/statusline.js\""
+  }
+}
+```
+
+**No perdés el statusline que ya tenías.** Pasalo como argumento y el del pet
+se lo delega, con el mismo stdin:
+
+```json
+"command": "node \"C:/ruta/a/Claude-pet/app/statusline.js\" -- bash ~/.claude/mi-statusline.sh"
+```
+
+Sin esto el pet funciona igual, sólo que se entera del límite a medias: si
+Claude Code lo menciona en el texto de un aviso, se duerme igual pero muestra
+**«OOT — Out of Tokens»** sin hora, porque no la tiene. No inventa una.
+
 ## Manejarlo
 
 | | |
@@ -220,7 +255,11 @@ Claude-pet/
 │   ├── window.js         Estados, globo, controles del hover y ajustes. Vive
 │   │                     afuera del HTML porque la CSP no admite scripts
 │   │                     inline.
-│   ├── hook.js           Lo que ejecuta Claude Code.
+│   ├── hook.js           Lo que ejecuta Claude Code en cada evento.
+│   ├── statusline.js     El statusline del pet: publica la cuota y delega en
+│   │                     el tuyo. Es la única puerta por la que entra el
+│   │                     límite de uso — ningún hook lo trae.
+│   ├── quota.js          Lee esa cuota y decide si hay que dormir.
 │   └── package.json
 │
 ├── demo/

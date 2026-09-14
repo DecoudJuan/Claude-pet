@@ -29,6 +29,7 @@ Lo único que sale de tu máquina es lo que vos subas a un repositorio.
 | `%LOCALAPPDATA%\claude-pets\pet.lock` | El PID de la ventana, para no abrir dos. |
 | `%LOCALAPPDATA%\claude-pets\muted` | Una marca de «lo cerré a mano». |
 | `%APPDATA%\claude-pet\pet.json` | Tus preferencias: posición, tamaño, avatar, paleta y notebook. |
+| `~/.claude/quota-status/current.json` | Lo escribe el statusline, no el pet: el porcentaje de uso y a qué hora vuelve. El pet sólo lo lee. Sin secretos ni contenido de tus conversaciones. |
 
 **Retención.** El archivo de una sesión se borra cuando la sesión termina
 (`SessionEnd`). Los que quedan huérfanos — porque cerraste la terminal de

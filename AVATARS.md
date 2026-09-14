@@ -41,7 +41,7 @@ Y tiene que devolver un handle con estos cuatro métodos. Son obligatorios:
 
 | Método | Cuándo lo llama el pet |
 |---|---|
-| `setState(estado)` | `'idle'` · `'working'` · `'thinking'` |
+| `setState(estado)` | `'idle'` · `'working'` · `'thinking'` · `'waiting'` · `'sleeping'` |
 | `look(x, y)` | Cada 80 ms con la posición del cursor **relativa a la ventana**. Puede ser negativa o mayor que la ventana: el cursor está en cualquier parte de la pantalla. |
 | `poke()` | Cuando lo tocan, y cuando termina un turno. |
 | `destroy()` | Al cambiar de avatar. Soltá timers, listeners y `requestAnimationFrame`. |
@@ -133,7 +133,12 @@ rechoncho. Al torso no: eso sería desviarse del canon.
   tanto (4–9 s tecleando, 2–4 s pensando) para que no parezca un loop. Es el
   mismo trabajo, otra pose.
 
-El pet no le manda `waiting` ni `done` al avatar: eso lo cuenta el globo de
+- **`sleeping`** — se acabaron los tokens. No es que terminó ni que descansa
+  entre turnos: no puede trabajar hasta que se resetee el límite. Ojos
+  cerrados, sin computadora, y sin seguir el cursor — está durmiendo, no
+  distraído.
+
+El pet no le manda `done` al avatar: eso lo cuenta el globo de
 diálogo, que es del pet, no del avatar. En `done` sí le pega un `poke()`.
 
 ---
@@ -185,7 +190,7 @@ No hay paso 4. No hay que tocar `main.js`, ni el panel, ni el CSS.
 ## Un esqueleto que funciona
 
 Un avatar completo y mínimo. Cumple las dos reglas — torso canónico y la
-máquina dibujada por el device — y responde a los cuatro estados. Copialo y
+máquina dibujada por el device — y responde a los cinco estados. Copialo y
 cambiale la cabeza.
 
 ```js
@@ -241,8 +246,9 @@ window.PetAvatars.register({
     device(opts.device);
 
     (function loop() {
-      if (state === 'working')       { tx = 0;   ty = 0.9;  }   // mira el teclado
-      else if (state === 'thinking') { tx = 0.5; ty = -0.4; }   // levanta la vista
+      if (state === 'working')       { tx = 0;    ty = 0.9;  }  // mira el teclado
+      else if (state === 'thinking') { tx = 0.5;  ty = -0.4; }  // levanta la vista
+      else if (state === 'sleeping') { tx = 0.06; ty = 0.55; }  // duerme: no sigue el cursor
       sx += (tx - sx) * 0.14;
       sy += (ty - sy) * 0.14;
       head.setAttribute('transform',
@@ -253,15 +259,16 @@ window.PetAvatars.register({
     return {
       setState: function (s) {
         state = s;
-        // la máquina se ve en todo lo que no sea reposo: waiting sigue a mitad
-        // de tarea, no terminó
-        lap.setAttribute('opacity', s === 'idle' ? 0 : 1);
+        // la máquina se ve mientras hay trabajo a medio hacer. waiting sigue a
+        // mitad de tarea; sleeping no — sin tokens no hay nada que hacer.
+        lap.setAttribute('opacity', (s === 'idle' || s === 'sleeping') ? 0 : 1);
         // y en waiting las manos se despegan del teclado
         lap.querySelectorAll('.hand').forEach(function (h) {
           h.setAttribute('transform', s === 'waiting' ? 'translate(0 -7)' : '');
         });
       },
       look: function (x, y) {
+        if (state === 'working' || state === 'sleeping') return;   // no mira el mouse
         var r = svg.getBoundingClientRect();
         var c = function (v) { return Math.max(-1, Math.min(1, v)); };
         tx = c((x - r.left - r.width / 2) / (r.width * 1.4));
@@ -280,8 +287,8 @@ window.PetAvatars.register({
 ```
 
 Lo que **no** hace y deberías sumarle: parpadeo, deriva cuando no hay cursor
-cerca, tecleo animado en `working` y una tinta que se levante sobre fondo
-oscuro. Todo eso está resuelto en `avatars/penguin/draw.js`.
+cerca, tecleo animado en `working`, ojos cerrados en `sleeping` y una tinta que
+se levante sobre fondo oscuro. Todo eso está resuelto en `avatars/penguin/draw.js`.
 
 ## El pingüino como referencia
 

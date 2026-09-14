@@ -11,6 +11,7 @@ const { app, BrowserWindow, ipcMain, screen, Menu, shell } = require('electron')
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const quota = require('./quota');
 
 // El panel de ajustes mide siempre lo mismo, así que la ventana no puede ser
 // más angosta que él: cambiar de tamaño mueve el alto y el avatar, nunca el
@@ -126,6 +127,24 @@ let doneDetail = null;
 function project(sessions) {
   const now = Date.now();
 
+  // Primero que todo: sin tokens no hay nada que hacer. Si no, el avatar se
+  // queda tecleando delante de una terminal que no puede avanzar — que es
+  // justo el caso en el que más molesta.
+  // Con statusline sabemos que se acabaron Y cuándo vuelven. Sin statusline,
+  // como mucho sabemos que se acabaron — y entonces no se inventa una hora.
+  const out = quota.exhausted(now);
+  const flagged = sessions.some(function (s) { return s.limited; });
+  if (out || flagged) {
+    lastPhase = 'sleeping';
+    doneUntil = 0;
+    return {
+      phase: 'sleeping',
+      window: out ? out.window : null,
+      resetsAt: out ? out.resetsAt : null,
+      account: out ? out.account : null
+    };
+  }
+
   // Cuando contestás un pedido de permiso no se dispara ningún hook hasta que
   // termina el turno, así que el aviso se apagaría recién ahí. Vence solo: a
   // los 40 s la sesión vuelve a contarse como trabajando, que es lo que pasó.
@@ -162,7 +181,8 @@ function project(sessions) {
     };
   }
 
-  // nadie trabajando: si veníamos de trabajar, avisamos
+  // nadie trabajando: si veníamos de trabajar, avisamos. Volver de dormir no
+  // cuenta — no terminó nada, se le devolvieron los tokens.
   if (lastPhase === 'working' || lastPhase === 'waiting') {
     const justDone = sessions
       .filter(function (s) { return s.finishedAt; })
