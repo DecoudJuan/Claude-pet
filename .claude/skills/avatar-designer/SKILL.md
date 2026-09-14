@@ -90,14 +90,20 @@ window.PetAvatars.register({
 });
 ```
 
-Archivo en `pet/avatars/<id>.js` y un `<script>` en `pet/pet.html`. Nada más:
-el panel de ajustes lee el registro solo.
+**Una carpeta por avatar**, con el mismo reparto que el pingüino:
 
-**Dónde va el dibujo.** Si el avatar es chico, todo en ese mismo archivo. Si es
-grande, separalo como está el pingüino: el dibujo en un archivo propio en la
-raíz — reutilizable en cualquier página web, sin nada del pet — y en
-`pet/avatars/<id>.js` sólo el `register()` que lo envuelve. Son dos `<script>`
-en vez de uno.
+```
+avatars/<id>/
+├── draw.js      el dibujo — no sabe que el pet existe
+└── avatar.js    el register() que lo declara
+```
+
+Esa separación no es capricho: `draw.js` se puede montar en cualquier página
+web con un `<div>` y dos líneas, y `avatar.js` es el único que conoce el
+sistema. Si tu avatar es muy chico podés juntar los dos, pero perdés eso.
+
+Después, los dos `<script>` en `app/window.html`, en la sección de catálogo. El
+panel de ajustes lee el registro solo: no hay nada más que tocar.
 
 ## Dos reglas estructurales que no se negocian
 
@@ -113,7 +119,7 @@ cara, colores, accesorios.
 No pidas la geometría de memoria ni la copies del pingüino: **pedila**.
 
 ```js
-var B = window.PetBody;   // pet-body.js, en la raíz
+var B = window.PetBody;   // core/body.js, en la raíz
 
 B.torso        // el path de la silueta — usalo tal cual
 B.belly        // el path del frente
@@ -191,13 +197,13 @@ pingüino de 56 % de un núcleo a 13 %:
 
 ## Cómo probarlo
 
-`index.html` en la raíz monta el avatar suelto en una página, sin Electron ni
+`demo/index.html` monta el avatar suelto en una página, sin Electron ni
 hooks — es el lugar para iterar el dibujo. Para probar los estados de verdad:
 
 ```bash
-node pet/hook.js working  < payload.json    # teclea
-node pet/hook.js waiting  < payload.json    # te espera
-node pet/hook.js done     < payload.json    # globo de fin
+node app/hook.js working  < payload.json    # teclea
+node app/hook.js waiting  < payload.json    # te espera
+node app/hook.js done     < payload.json    # globo de fin
 ```
 
 donde `payload.json` es `{"session_id":"test","cwd":"/ruta/al/proyecto"}`.

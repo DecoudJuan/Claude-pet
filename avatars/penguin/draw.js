@@ -3,7 +3,8 @@
  * parpadea y reacciona al toque. Sin dependencias, sin API de imágenes.
  *
  *   <div id="mascota"></div>
- *   <script src="penguin-mascot.js"></script>
+ *   <script src="core/body.js"></script>
+ *   <script src="avatars/penguin/draw.js"></script>
  *   <script>PenguinMascot.mount(document.getElementById('mascota'));</script>
  */
 (function (root, factory) {

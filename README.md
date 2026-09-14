@@ -12,7 +12,7 @@ aparte: cualquiera puede escribir el suyo y elegirlo desde el panel.
 [![License: MIT](https://img.shields.io/badge/license-MIT-d9b45f)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20·%20macOS%20·%20Linux-1f2430)](#instalar)
 [![Runtime](https://img.shields.io/badge/runtime-Electron-4a6fa5)](pet/package.json)
-[![Dependencias del dibujo](https://img.shields.io/badge/dependencias%20del%20dibujo-0-2b6e4f)](penguin-mascot.js)
+[![Dependencias del dibujo](https://img.shields.io/badge/dependencias%20del%20dibujo-0-2b6e4f)](avatars/penguin/draw.js)
 [![Red](https://img.shields.io/badge/red-cero%20peticiones-2b6e4f)](SECURITY.md)
 
 </div>
@@ -82,7 +82,7 @@ está en el [roadmap](ROADMAP.md).
 
 ```bash
 git clone https://github.com/DecoudJuan/Claude-pet.git
-cd Claude-pet/pet
+cd Claude-pet/app
 npm install
 ```
 
@@ -106,19 +106,22 @@ Cambiá la ruta por la tuya:
 {
   "hooks": {
     "SessionStart": [
-      { "hooks": [{ "type": "command", "command": "node \"C:/ruta/a/Claude-pet/pet/hook.js\" start",   "async": true, "timeout": 10 }] }
+      { "hooks": [{ "type": "command", "command": "node \"C:/ruta/a/Claude-pet/app/hook.js\" start",   "async": true, "timeout": 10 }] }
     ],
     "UserPromptSubmit": [
-      { "hooks": [{ "type": "command", "command": "node \"C:/ruta/a/Claude-pet/pet/hook.js\" working", "async": true, "timeout": 5 }] }
+      { "hooks": [{ "type": "command", "command": "node \"C:/ruta/a/Claude-pet/app/hook.js\" working", "async": true, "timeout": 5 }] }
     ],
     "Notification": [
-      { "hooks": [{ "type": "command", "command": "node \"C:/ruta/a/Claude-pet/pet/hook.js\" waiting", "async": true, "timeout": 5 }] }
+      { "hooks": [{ "type": "command", "command": "node \"C:/ruta/a/Claude-pet/app/hook.js\" waiting", "async": true, "timeout": 5 }] }
     ],
     "Stop": [
-      { "hooks": [{ "type": "command", "command": "node \"C:/ruta/a/Claude-pet/pet/hook.js\" done",    "async": true, "timeout": 5 }] }
+      { "hooks": [{ "type": "command", "command": "node \"C:/ruta/a/Claude-pet/app/hook.js\" done",    "async": true, "timeout": 5 }] }
+    ],
+    "StopFailure": [
+      { "hooks": [{ "type": "command", "command": "node \"C:/ruta/a/Claude-pet/app/hook.js\" done",    "async": true, "timeout": 5 }] }
     ],
     "SessionEnd": [
-      { "hooks": [{ "type": "command", "command": "node \"C:/ruta/a/Claude-pet/pet/hook.js\" end",     "async": true, "timeout": 5 }] }
+      { "hooks": [{ "type": "command", "command": "node \"C:/ruta/a/Claude-pet/app/hook.js\" end",     "async": true, "timeout": 5 }] }
     ]
   }
 }
@@ -192,42 +195,48 @@ los estados, el contrato y los errores que rompen la ventana:
 
 ```
 Claude-pet/
-├── pet-body.js           El cuerpo canónico: el torso que comparten todos los
-│                         avatares y los puntos donde se apoyan la notebook y
-│                         las manos. La geometría se pide, no se copia.
-├── penguin-mascot.js     El avatar que viene incluido. Un SVG a mano, sin API
-│                         de imágenes. Sirve en cualquier página web, sin nada
-│                         del pet.
-├── index.html            Demo del avatar suelto: las paletas y cómo montarlo
-│                         en tu propia página.
+│
+├── core/                 El contrato. Lo único que todos comparten.
+│   ├── body.js           El cuerpo canónico: el torso que usan todos los
+│   │                     avatares y los anclajes de la notebook y las manos.
+│   ├── avatars.js        El registro de avatares.
+│   └── devices.js        El registro de notebooks, y la silueta que dibujan.
+│
+├── avatars/              Los personajes. Una carpeta por avatar.
+│   └── penguin/
+│       ├── draw.js       El dibujo: SVG a mano, sin API de imágenes. Sirve en
+│       │                 cualquier página web, sin nada del resto.
+│       └── avatar.js     El register() que lo declara ante el sistema.
+│
+├── devices/              Las máquinas.
+│   └── laptops.js        Las diez que vienen de fábrica.
+│
+├── app/                  La aplicación de escritorio.
+│   ├── main.js           Proceso principal: la ventana transparente, el
+│   │                     arrastre, el vigía del estado, el ciclo de vida y el
+│   │                     click-through.
+│   ├── preload.js        El puente con contextIsolation.
+│   ├── window.html       El marcado y el estilo de la ventana.
+│   ├── window.js         Estados, globo, controles del hover y ajustes. Vive
+│   │                     afuera del HTML porque la CSP no admite scripts
+│   │                     inline.
+│   ├── hook.js           Lo que ejecuta Claude Code.
+│   └── package.json
+│
+├── demo/
+│   └── index.html        El avatar suelto en una página, sin Electron ni
+│                         hooks. El lugar para iterar un dibujo.
+│
 ├── AVATARS.md            El contrato de avatares y cómo sumar uno.
 ├── ROADMAP.md            En qué orden se construyó esto y qué falta.
 ├── SECURITY.md           Qué guarda, qué no, y por qué está cerrado como está.
-├── .claude/skills/       Skills para diseñar avatares y notebooks con Claude.
-└── pet/
-    ├── main.js           Proceso principal de Electron. La ventana transparente,
-    │                     el arrastre, el vigía del directorio de estado, el
-    │                     ciclo de vida y el click-through.
-    ├── preload.js        El puente con contextIsolation. La única superficie
-    │                     que la ventana ve del proceso principal.
-    ├── pet.html          El marcado y el estilo de la ventana.
-    ├── pet.js            La ventana: estados del avatar, globo de diálogo,
-    │                     controles del hover y panel de ajustes. Vive afuera
-    │                     del HTML porque la CSP no admite scripts inline.
-    ├── hook.js           Lo que ejecuta Claude Code. Escribe el estado de la
-    │                     sesión y, si hace falta, levanta el pet.
-    ├── avatars.js        El registro de avatares y su contrato.
-    ├── avatars/
-    │   └── penguin.js    El pingüino, envuelto como avatar.
-    ├── devices.js        El registro de notebooks, y la silueta que dibujan.
-    ├── devices/
-    │   └── laptops.js    Las diez que vienen de fábrica.
-    └── package.json
+└── .claude/skills/       Skills para diseñar avatares y notebooks con Claude.
 ```
 
-Los avatares no dependen de nada del pet: `penguin-mascot.js` se puede usar en
-una página cualquiera con un `<div>` y dos líneas. El pet es un consumidor más,
-y es la única pieza que sabe de Claude Code.
+**Las dependencias van en un solo sentido.** `core` no sabe de nadie.
+`avatars` y `devices` dependen sólo de `core`. `app` los usa a los tres y es la
+única pieza que sabe que Claude Code existe — el dibujo de un avatar se puede
+poner en cualquier página web con un `<div>` y dos líneas.
 
 ## Seguridad y privacidad
 

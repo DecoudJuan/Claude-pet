@@ -21,7 +21,7 @@ nuevo, no un device.
 
 ## Registrar una
 
-En `pet/devices/laptops.js`:
+En `devices/laptops.js`:
 
 ```js
 { id: 'macbook-midnight', name: 'MacBook · Midnight',
@@ -55,17 +55,17 @@ contraste hasta que se lea, no hasta que sea exacto.
 ## Probar
 
 ```bash
-cd pet && npm start
+cd app && npm start
 ```
 
 Hover sobre el dibujo → **⋯** → el selector **Notebook**. Cambia en caliente,
 sin remontar el avatar.
 
-Si no aparece, revisá que `pet/pet.html` cargue tu archivo:
+Si no aparece, revisá que `app/window.html` cargue tu archivo:
 
 ```html
-<script src="devices.js"></script>
-<script src="devices/laptops.js"></script>
+<script src="../core/devices.js"></script>
+<script src="../devices/laptops.js"></script>
 ```
 
 ## Checklist

@@ -249,7 +249,7 @@ function createWindow() {
     }
   });
 
-  win.loadFile(path.join(__dirname, 'pet.html'));
+  win.loadFile(path.join(__dirname, 'window.html'));
 
   // La ventana no navega a ningún lado ni abre ventanas: es una sola página
   // local. Dejarlo explícito cierra el camino por el que un avatar de terceros

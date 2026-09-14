@@ -118,9 +118,9 @@ diálogo, que es del pet, no del avatar. En `done` sí le pega un `poke()`.
 
 ## Sumar uno
 
-**1. El archivo.** `pet/avatars/zorro.js`, con el `register()` de arriba.
+**1. El archivo.** `avatars/zorro/avatar.js`, con el `register()` de arriba.
 
-**2. El `<script>`.** En `pet/pet.html`, junto a los otros:
+**2. El `<script>`.** En `app/window.html`, junto a los otros:
 
 ```html
 <script src="avatars.js"></script>
@@ -192,7 +192,7 @@ window.PetAvatars.register({
 
 ## El pingüino como referencia
 
-`penguin-mascot.js` es la implementación completa del contrato y se puede leer
+`avatars/penguin/draw.js` es la implementación completa del contrato y se puede leer
 como ejemplo. Vale la pena mirar tres cosas:
 
 - **Paletas por variables CSS.** El SVG no tiene ni un color escrito adentro:

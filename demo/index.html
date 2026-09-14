@@ -281,7 +281,8 @@
     <h2>Un div, un script, una línea.</h2>
     <pre><code>&lt;div id="mascota"&gt;&lt;/div&gt;
 
-&lt;script src="penguin-mascot.js"&gt;&lt;/script&gt;
+&lt;script src="core/body.js"&gt;&lt;/script&gt;
+&lt;script src="avatars/penguin/draw.js"&gt;&lt;/script&gt;
 &lt;script&gt;
   <span class="k">PenguinMascot</span>.mount(<span class="k">document</span>.getElementById(<span class="c">'mascota'</span>), {
     palette: <span class="c">'riso'</span>
@@ -348,10 +349,10 @@
 
 </div>
 
-<script src="pet-body.js"></script>
-<script src="penguin-mascot.js"></script>
-<script src="pet/devices.js"></script>
-<script src="pet/devices/laptops.js"></script>
+<script src="../core/body.js"></script>
+<script src="../core/devices.js"></script>
+<script src="../avatars/penguin/draw.js"></script>
+<script src="../devices/laptops.js"></script>
 <script>
   PenguinMascot.mount(document.getElementById('hero-mascot'), {
     label: 'Pingüino con anteojos y auriculares. Sigue el cursor; tocalo para que salte.'

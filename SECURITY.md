@@ -209,7 +209,7 @@ todas en verde sería teatro. Lo que sí aplica:
 vulnerabilidades. Si vas a dejar esto corriendo todo el día, mantenelo al día:
 
 ```bash
-cd pet
+cd app
 npm audit
 npm update electron
 ```
