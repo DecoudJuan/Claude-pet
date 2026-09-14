@@ -1,6 +1,6 @@
 ---
 name: avatar-designer
-description: Diseñar e implementar un avatar nuevo para Claude Pet — la mascota de escritorio que refleja el estado de Claude Code. Usala cuando alguien pida "creá un avatar", "quiero un zorro/gato/robot para el pet", "add an avatar", "hacé una mascota nueva", "diseñá un personaje para claude-pet", o cuando haya que dibujar/ajustar los estados (idle, working, thinking, waiting) o la notebook de un avatar existente. Cubre el contrato que tiene que cumplir, qué significa cada estado, cómo se registra y qué errores de dibujo rompen la ventana.
+description: Diseñar e implementar un avatar nuevo para Claude Pet — la mascota de escritorio que refleja el estado de Claude Code. Un avatar puede ser cualquier cosa que se dibuje: un animal, un objeto, un robot, una persona, un personaje inventado. Usala siempre que alguien quiera crear, diseñar, agregar o cambiar el personaje del pet, sin importar qué personaje sea — "creá un avatar", "hacé una mascota nueva", "quiero un <lo que sea> para el pet", "add an avatar", "diseñá un personaje para claude-pet" — y también cuando haya que dibujar o ajustar los estados (idle, working, thinking, waiting) o la notebook de un avatar que ya existe. Cubre el contrato que tiene que cumplir, qué debe comunicar cada estado, cómo se registra y qué errores de dibujo rompen la ventana.
 ---
 
 # Diseñar un avatar para Claude Pet
@@ -8,6 +8,10 @@ description: Diseñar e implementar un avatar nuevo para Claude Pet — la masco
 Claude Pet es una mascota de escritorio que refleja el estado de Claude Code.
 El pet **no sabe dibujar**: sabe en qué estado está la sesión y se lo cuenta a
 un avatar. Vos escribís el avatar.
+
+**Puede ser cualquier cosa.** Un animal, un robot, una taza de café, un
+personaje inventado. El pet no sabe ni le importa qué dibujaste: lo único que
+le pide es que cumpla el contrato y que los cuatro estados se distingan.
 
 Leé `AVATARS.md` del repo para el contrato completo. Esta skill es el criterio
 de diseño: qué tiene que *comunicar* cada estado, no sólo qué métodos exponer.
