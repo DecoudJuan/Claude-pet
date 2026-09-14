@@ -25,6 +25,25 @@
     // De acá para arriba manda el avatar: cabeza, cara, accesorios.
     HEAD_BOTTOM: 186,
 
+    // El cráneo también es fijo de ancho. No la forma — puede ser redonda,
+    // cuadrada, alargada — pero sí la caja: todos los avatares tienen que
+    // leerse como parte de la misma familia, y una cabeza del doble de ancho
+    // que otra rompe eso. El alto tampoco es libre: el pet reserva un cuadrado
+    // y una cabeza que se estire sin límite se sale del cuadro o achica todo
+    // lo demás hasta que no se vea nada.
+    HEAD: {
+      cx: 120,
+      top: 30,        // más arriba de esto ya no es cabeza, es accesorio
+      bottom: 186,    // donde empieza el torso
+      width: 184      // x 28..212
+    },
+
+    // Orejas de conejo, cuernos, una cola, una vincha: lo que sobresale del
+    // cráneo puede llegar hasta acá y ni un píxel más. No es una preferencia
+    // estética — afuera de esta caja el dibujo se sale del viewBox y el pet lo
+    // recorta. Los auriculares del pingüino usan x 18..222, bien adentro.
+    LIMITS: { top: 8, left: 8, right: 232, bottom: 240 },
+
     // De acá para abajo es igual en todos.
     TORSO_TOP: 162,
 

@@ -93,11 +93,33 @@ var B = window.PetBody;
 B.torso        // el path de la silueta
 B.belly        // el path del frente
 B.TORSO_TOP    // 162 — de acá para abajo es de todos
-B.HEAD_BOTTOM  // 186 — hasta acá llega tu cabeza
+B.HEAD         // la caja del cráneo: cx, top, bottom, width
+B.LIMITS       // hasta dónde puede llegar un accesorio
 B.DEVICE       // dónde se dibuja la máquina
 B.HANDS        // dónde van tus manos sobre el teclado
 B.clipRect     // el recorte contra el borde de abajo
 ```
+
+### La cabeza también tiene caja
+
+**La forma es tuya; el tamaño no.** El cráneo entra en `B.HEAD` — 184 de ancho,
+de y 30 a 186 — y puede ser redondo, cuadrado, alargado o triangular adentro de
+esa caja. Lo que no puede es ser del doble de ancho que el de otro avatar: se
+dejarían de leer como parte de la misma familia, y encima taparía la notebook.
+
+Y el alto tampoco es libre. El pet reserva un cuadrado: una cabeza que se
+estire sin límite o se sale del cuadro, o achica todo lo demás hasta que no se
+vea nada.
+
+### Los accesorios sí pueden salirse del cráneo
+
+Orejas altas, cuernos, una cola, una vincha, un sombrero: **eso vive afuera de
+`B.HEAD` y está bien**. El único techo es `B.LIMITS` — x 8 a 232, y de 8 para
+abajo — que es el borde del viewBox con un margen. Más allá, el pet lo recorta
+y no se ve.
+
+Como referencia: los auriculares del pingüino usan de 18 a 222, bien adentro
+del límite.
 
 El pingüino le aplica un `scale(0.95 1)` a **su cabeza** para verse menos
 rechoncho. Al torso no: eso sería desviarse del canon.
