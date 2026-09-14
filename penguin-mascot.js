@@ -61,7 +61,10 @@
     '.pm-cup-line   { fill: none; stroke: var(--pm-ink); stroke-width: 1.6; opacity: .55; }',
     // --- estados de trabajo: la notebook y el tecleo ---
     '.pm-laptop { opacity: 0; transition: opacity .22s ease; pointer-events: none; }',
-    '.pm.is-working .pm-laptop, .pm.is-thinking .pm-laptop { opacity: 1; }',
+    // esperando también muestra la notebook: sigue a mitad de tarea, no terminó
+    '.pm.is-working .pm-laptop, .pm.is-thinking .pm-laptop, .pm.is-waiting .pm-laptop { opacity: 1; }',
+    // las aletas se despegan del teclado y quedan quietas
+    '.pm.is-waiting .pm-hand { transform: translateY(-7px); }',
     '.pm-lap-lid   { fill: var(--pm-lap); stroke: var(--pm-frame); stroke-width: 5; stroke-linejoin: round; }',
     '.pm-lap-badge { fill: var(--pm-beak); }',
     // las aletas van sobre el cuerpo, del mismo color: sin contorno propio
@@ -276,6 +279,10 @@
         // mirando arriba a un costado, como buscando la idea
         tx = 0.55 + Math.sin(now / 1900) * 0.14;
         ty = -0.5 + Math.sin(now / 2600) * 0.08;
+      } else if (state === 'waiting') {
+        // te busca a vos y se queda ahí: si derivara parecería distraído, y es
+        // justo el estado en el que necesita que lo mires
+        ty = Math.min(ty, 0.25);
       } else if (now - lastMoveAt > 2600) {
         // sin cursor cerca: deriva lenta, mirando alrededor
         tx = Math.sin(now / 2400) * 0.45;
@@ -340,11 +347,13 @@
     return {
       element: svg,
       poke: poke,
-      // 'idle' | 'working' | 'thinking'. working teclea, thinking mira al techo.
+      // 'idle' | 'working' | 'thinking' | 'waiting'. working teclea, thinking
+      // mira al techo, waiting suelta el teclado y te busca a vos.
       setState: function (next) {
         state = next || 'idle';
         svg.classList.toggle('is-working', state === 'working');
         svg.classList.toggle('is-thinking', state === 'thinking');
+        svg.classList.toggle('is-waiting', state === 'waiting');
       },
       getState: function () { return state; },
       // coordenadas del cursor relativas a la ventana, para pointer: 'manual'

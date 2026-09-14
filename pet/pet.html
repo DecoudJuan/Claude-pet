@@ -71,6 +71,15 @@
   }
   #bubble.show { opacity: 1; transform: none; pointer-events: auto; }
 
+  /* Esperando input el turno está frenado, así que el globo insiste: un
+     cabeceo cada tantos segundos, lo justo para que se note de reojo. */
+  @keyframes bubble-insist {
+    0%, 76%, 100% { transform: none; }
+    84%           { transform: translateY(-5px); }
+    92%           { transform: translateY(-1px); }
+  }
+  #bubble.show.insist { animation: bubble-insist 3.4s ease-in-out infinite; }
+
   /* la colita, en dos triángulos para que conserve el borde negro */
   #bubble::before,
   #bubble::after {
@@ -92,7 +101,7 @@
     border-color: var(--bg) transparent transparent transparent;
   }
 
-  #bubble .title { font-weight: 600; letter-spacing: -.01em; }
+  #bubble .title { font-weight: 600; letter-spacing: -.01em; overflow-wrap: anywhere; }
   #bubble .meta {
     margin-top: 3px;
     font-family: var(--mono);
@@ -512,9 +521,16 @@
     }
 
     avatar.setState('idle');
+    bubble.classList.remove('insist');
 
     if (s.phase === 'waiting') {
-      say('Te está esperando.', s.project ? 'en <b>' + esc(s.project) + '</b>' : 'necesita que le contestes');
+      avatar.setState('waiting');
+      // el mensaje del hook dice QUÉ pide; sin él sólo podríamos decir "te espera"
+      say(
+        s.message || 'Necesita que le contestes.',
+        s.project ? 'en <b>' + esc(s.project) + '</b>' : 'claude code'
+      );
+      bubble.classList.add('insist');
     } else if (s.phase === 'done') {
       avatar.poke();
       say(

@@ -74,6 +74,10 @@ function write() {
     state: state,
     cwd: payload.cwd || prev.cwd || '',
     lastTool: payload.tool_name || (KIND === 'done' ? '' : prev.lastTool || ''),
+    // Notification trae en `message` qué está pidiendo ("Claude needs your
+    // permission to use Bash"). Sin esto el globo sólo puede decir "te espera",
+    // que es justo lo que no sirve saber.
+    message: KIND === 'waiting' ? String(payload.message || '').slice(0, 160) : '',
     startedAt: restarting ? now : (prev.startedAt || now),
     finishedAt: KIND === 'done' ? now : null,
     updatedAt: now

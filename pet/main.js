@@ -126,7 +126,12 @@ function project(sessions) {
   if (waiting) {
     lastPhase = 'waiting';
     doneUntil = 0;
-    return { phase: 'waiting', project: label(waiting), tool: waiting.lastTool || '' };
+    return {
+      phase: 'waiting',
+      project: label(waiting),
+      message: waiting.message || '',
+      tool: waiting.lastTool || ''
+    };
   }
 
   if (working.length) {
