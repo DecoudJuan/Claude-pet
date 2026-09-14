@@ -124,10 +124,23 @@ de comandos posible.
 Un avatar es **JavaScript que corre en la ventana**. Instalar uno de otra
 persona es correr su código, igual que instalar cualquier dependencia.
 
-El sandbox acota bastante el daño posible: sin Node, sin red (`connect-src
-'none'`), sin poder navegar ni abrir ventanas, sin acceso al disco. Un avatar
-malicioso puede arruinarte el dibujo y consumir CPU. **No puede exfiltrar
-nada**, porque no hay por dónde.
+El sandbox acota el daño posible: sin Node, sin red (`connect-src 'none'`), sin
+poder navegar ni abrir ventanas, sin acceso al disco. **No puede sacar nada de
+tu máquina**, porque no hay por dónde — aunque leyera algo, no tiene a quién
+mandárselo.
+
+Lo que sí puede, y cuánto te importe depende de dónde lo corras:
+
+- **Consumir CPU** sin techo. En una desktop enchufada es ruido de ventilador;
+  en una notebook a batería es otra cosa.
+- **Dibujar cualquier cosa** dentro de su cuadrado, en una ventana que está
+  siempre encima de todo lo demás. Incluido texto que parezca decir algo que no
+  dice.
+- **Colgarse**, y con él la ventana. Se cierra con la ✕ y no vuelve hasta la
+  próxima sesión, pero hay que darse cuenta.
+
+Ninguna de las tres toca tus archivos ni tus datos. Eso no las vuelve
+irrelevantes: las vuelve acotadas.
 
 Aun así, antes de instalar uno que no escribiste:
 
