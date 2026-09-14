@@ -66,7 +66,8 @@
     // las aletas se despegan del teclado y quedan quietas
     '.pm.is-waiting .pm-hand { transform: translateY(-7px); }',
     '.pm-lap-lid   { fill: var(--pm-lap); stroke: var(--pm-frame); stroke-width: 5; stroke-linejoin: round; }',
-    '.pm-lap-badge { fill: var(--pm-beak); }',
+    '.pm-lap-badge      { fill: var(--pm-lap-badge, var(--pm-beak)); }',
+    '.pm-lap-badge-ring { fill: none; stroke: var(--pm-lap-badge, var(--pm-beak)); stroke-width: 3; }',
     // las aletas van sobre el cuerpo, del mismo color: sin contorno propio
     // desaparecen y no se ve el tecleo.
     '.pm-hand { fill: var(--pm-ink); stroke: var(--pm-frame); stroke-width: 3.5; transform-box: fill-box; transform-origin: 50% 50%; }',
@@ -188,7 +189,8 @@
     '      <ellipse class="pm-hand pm-hand-l" cx="26" cy="210" rx="17" ry="11"/>',
     '      <ellipse class="pm-hand pm-hand-r" cx="214" cy="210" rx="17" ry="11"/>',
     '      <path class="pm-lap-lid" d="M50 262 L26 174 C24 170 28 166 33 166 L207 166 C212 166 216 170 214 174 L190 262 Z"/>',
-    '      <circle class="pm-lap-badge" cx="120" cy="206" r="8"/>',
+    // el logo lo pone el device elegido; vacío es una tapa sin marca
+    '      <g class="pm-lap-slot"></g>',
     '    </g>',
 
     '    <g aria-hidden="true">',
@@ -225,6 +227,18 @@
     var head = svg.querySelector('.pm-head');
     var body = svg.querySelector('.pm-body');
     var pupils = svg.querySelectorAll('.pm-pupil');
+    var lapSlot = svg.querySelector('.pm-lap-slot');
+
+    // La notebook viene de afuera: el avatar sólo dibuja la silueta y le pide
+    // al device la tapa y el logo. Sin device, tapa sin marca.
+    function applyDevice(dev) {
+      svg.style.setProperty('--pm-lap', (dev && dev.lid) || '#1f252d');
+      svg.style.setProperty('--pm-lap-badge', (dev && dev.badgeColor) || '#d8dadd');
+      lapSlot.innerHTML = (window.PetDevices && dev)
+        ? window.PetDevices.badgeMarkup(dev, 120, 206)
+        : '';
+    }
+    applyDevice(options.device);
 
     svg.setAttribute('aria-label', options.label || 'Pingüino con anteojos y auriculares. Sigue el cursor.');
     if (options.palette) svg.setAttribute('data-palette', options.palette);
@@ -364,6 +378,7 @@
         aim();
       },
       setPalette: function (name) { svg.setAttribute('data-palette', name); },
+      setDevice: applyDevice,
       destroy: function () {
         alive = false;
         cancelAnimationFrame(raf);
