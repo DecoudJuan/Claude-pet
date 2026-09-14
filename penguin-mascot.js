@@ -23,8 +23,6 @@
     '  --pm-beak: #f0951f;',
     '  --pm-beak-shade: #d97a10;',
     '  --pm-silver: #f1f3f5;',
-    '  --pm-lap: #1f252d;',
-    '  --pm-lap-deck: #5a636f;',
     '  display: block; width: 100%; height: auto; max-width: 100%;',
     '  overflow: visible; cursor: pointer; touch-action: manipulation;',
     '  -webkit-tap-highlight-color: transparent;',
@@ -65,9 +63,6 @@
     '.pm.is-working .pm-laptop, .pm.is-thinking .pm-laptop, .pm.is-waiting .pm-laptop { opacity: 1; }',
     // las aletas se despegan del teclado y quedan quietas
     '.pm.is-waiting .pm-hand { transform: translateY(-7px); }',
-    '.pm-lap-lid   { fill: var(--pm-lap); stroke: var(--pm-frame); stroke-width: 5; stroke-linejoin: round; }',
-    '.pm-lap-badge      { fill: var(--pm-lap-badge, var(--pm-beak)); }',
-    '.pm-lap-badge-ring { fill: none; stroke: var(--pm-lap-badge, var(--pm-beak)); stroke-width: 3; }',
     // las aletas van sobre el cuerpo, del mismo color: sin contorno propio
     // desaparecen y no se ve el tecleo.
     '.pm-hand { fill: var(--pm-ink); stroke: var(--pm-frame); stroke-width: 3.5; transform-box: fill-box; transform-origin: 50% 50%; }',
@@ -122,19 +117,18 @@
     '    <clipPath id="pm-crop-__UID__"><rect x="-120" y="-120" width="480" height="360"/></clipPath>',
     '  </defs>',
     '  <g class="pm-all">',
-    // Achica el ancho un 5% alrededor del eje, sin tocar el alto: el dibujo
-    // salía rechoncho. Va en su propio grupo, con el transform como atributo,
-    // para no chocar con las animaciones CSS de .pm-all.
-    '   <g transform="translate(120 0) scale(0.95 1) translate(-120 0)">',
-
+    // El torso es canónico: misma forma y mismo tamaño en todos los avatares.
+    // Viene de PetBody para que no pueda desviarse copiándolo mal.
     '    <g class="pm-body" clip-path="url(#pm-crop-__UID__)">',
-    '      <path class="pm-fill-ink" d="M-6 262 C-8 198 40 162 120 162 C200 162 248 198 246 262 Z"/>',
-    '      <path class="pm-fill-snow" d="M62 262 C60 214 92 196 120 196 C148 196 180 214 178 262 Z"/>',
-    '      <path class="pm-feather" d="M141 212 C145 216 145 221 142 225"/>',
-    '      <path class="pm-feather" d="M150 224 C154 228 154 233 151 237"/>',
+    '      <path class="pm-fill-ink" d="__TORSO__"/>',
+    '      <path class="pm-fill-snow" d="__BELLY__"/>',
+    '      <path class="pm-feather" d="M140 212 C143.8 216 143.8 221 140.9 225"/>',
+    '      <path class="pm-feather" d="M148.5 224 C152.3 228 152.3 233 149.4 237"/>',
     '    </g>',
 
-    '    <g class="pm-head">',
+    // De la clavícula para arriba manda el avatar. El 5% de angostura es del
+    // pingüino, no del sistema, así que envuelve sólo su cabeza.
+    '    <g class="pm-head" transform="translate(120 0) scale(0.95 1) translate(-120 0)">',
     // capucha negra — apenas asimétrica, como trazo a mano
     '      <path class="pm-fill-ink" d="M120 30 C66 30 28 64 28 116 C28 158 62 186 120 186 C178 186 212 158 212 116 C212 64 174 30 120 30 Z"/>',
     // cara blanca: casi toda la cabeza, subiendo en dos jorobas — una por ojo
@@ -188,12 +182,12 @@
     // tapa: más ancha arriba (se abre hacia atrás) y el teclado tapado atrás,
     // no adelante. Abajo asoma apenas el canto de la base, y las aletas entran
     // por los costados. Sólo visible en working / thinking.
+    // Las manos son del avatar; la máquina no. El avatar sólo deja el hueco y
+    // las pone en los anclajes de PetBody para que caigan sobre el teclado.
     '    <g class="pm-laptop" clip-path="url(#pm-crop-__UID__)" aria-hidden="true">',
-    '      <ellipse class="pm-hand pm-hand-l" cx="26" cy="210" rx="17" ry="11"/>',
-    '      <ellipse class="pm-hand pm-hand-r" cx="214" cy="210" rx="17" ry="11"/>',
-    '      <path class="pm-lap-lid" d="M50 262 L26 174 C24 170 28 166 33 166 L207 166 C212 166 216 170 214 174 L190 262 Z"/>',
-    // el logo lo pone el device elegido; vacío es una tapa sin marca
-    '      <g class="pm-lap-slot"></g>',
+    '      <ellipse class="pm-hand pm-hand-l" cx="__HLX__" cy="__HY__" rx="__HRX__" ry="__HRY__"/>',
+    '      <ellipse class="pm-hand pm-hand-r" cx="__HRX2__" cy="__HY__" rx="__HRX__" ry="__HRY__"/>',
+    '      <g class="pm-device"></g>',
     '    </g>',
 
     '    <g aria-hidden="true">',
@@ -201,7 +195,6 @@
     '      <text class="pm-note pm-note-b" x="206" y="78" style="--pm-nx: 12px">&#9835;</text>',
     '    </g>',
 
-    '   </g>',
     '  </g>',
     '</svg>'
   ].join('\n');
@@ -224,30 +217,36 @@
     options = options || {};
 
     injectStyle(host.ownerDocument || document);
-    host.innerHTML = MARKUP.replace(/__UID__/g, String(++uid));
+
+    // La geometría del cuerpo no se copia: se pide. Así ningún avatar puede
+    // desviarse del torso canónico por transcribirlo mal.
+    var B = window.PetBody;
+    if (!B) throw new Error('PenguinMascot: falta pet-body.js');
+
+    host.innerHTML = MARKUP
+      .replace(/__UID__/g, String(++uid))
+      .replace('__TORSO__', B.torso)
+      .replace('__BELLY__', B.belly)
+      .replace(/__HLX__/g, B.HANDS.left.x)
+      .replace(/__HRX2__/g, B.HANDS.right.x)
+      .replace(/__HY__/g, B.HANDS.left.y)
+      .replace(/__HRX__/g, B.HANDS.rx)
+      .replace(/__HRY__/g, B.HANDS.ry);
 
     var svg = host.querySelector('.pm');
     var head = svg.querySelector('.pm-head');
     var body = svg.querySelector('.pm-body');
     var pupils = svg.querySelectorAll('.pm-pupil');
-    var lapSlot = svg.querySelector('.pm-lap-slot');
+    var deviceSlot = svg.querySelector('.pm-device');
 
-    // La notebook viene de afuera: el avatar sólo dibuja la silueta y le pide
-    // al device la tapa y el logo. Sin device, tapa sin marca.
-    // Un device puede venir de un archivo de terceros: sus colores entran a una
-    // custom property, así que se aceptan sólo si parecen un color.
-    function colour(v, fallback) {
-      return /^(#[0-9a-fA-F]{3,8}|[a-zA-Z]{3,20}|rgba?\([\d\s.,%]+\)|hsla?\([\d\s.,%deg]+\))$/.test(String(v || ''))
-        ? String(v)
-        : fallback;
-    }
-
+    // La notebook la dibuja el device, entera. El avatar sólo le presta el
+    // hueco y le pasa el borde para que la línea combine con el dibujo.
     function applyDevice(dev) {
-      svg.style.setProperty('--pm-lap', colour(dev && dev.lid, '#1f252d'));
-      svg.style.setProperty('--pm-lap-badge', colour(dev && dev.badgeColor, '#d8dadd'));
-      lapSlot.innerHTML = (window.PetDevices && dev)
-        ? window.PetDevices.badgeMarkup(dev, 120, 206)
-        : '';
+      if (!window.PetDevices) { deviceSlot.innerHTML = ''; return; }
+      window.PetDevices.injectStyle(host.ownerDocument || document);
+      svg.style.setProperty('--pd-edge', 'var(--pm-frame)');
+      window.PetDevices.applyTo(svg, dev);
+      deviceSlot.innerHTML = window.PetDevices.markup(dev);
     }
     applyDevice(options.device);
 
