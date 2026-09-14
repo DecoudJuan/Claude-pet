@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>claude-pet</title>
+<style>
+  :root {
+    --bg:     #ffffff;
+    --ink:    #14181d;
+    --muted:  #6b7682;
+    --line:   #dfe4ea;
+    --accent: #d97a14;
+    --mono: "Cascadia Code", "Consolas", ui-monospace, monospace;
+    --sans: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+
+    /* El avatar es cuadrado: --avatar es a la vez su ancho y su alto, y todo
+       lo demás se ancla a eso. Lo fija el tamaño elegido, no el de la ventana:
+       el ancho de la ventana es constante para que el panel nunca cambie. */
+    --avatar: 182px;
+
+    /* El panel mide siempre lo mismo, en los tres tamaños: el de medio con
+       algo de aire. Ni apretado en chico ni desparramado en grande. */
+    --panel-w: 228px;
+    --panel-h: 208px;
+  }
+  :root[data-size="s"] { --avatar: 152px; }
+  :root[data-size="l"] { --avatar: 224px; }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: transparent;
+    overflow: hidden;
+    user-select: none;
+    cursor: default;
+    font-family: var(--sans);
+  }
+
+  #stage {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  /* ---------- globo de diálogo ---------- */
+
+  #bubble {
+    position: absolute;
+    width: var(--panel-w);
+    left: 50%;
+    margin-left: calc(var(--panel-w) / -2);
+    bottom: calc(var(--avatar) + 10px);
+    background: var(--bg);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    border-radius: 14px;
+    padding: 9px 11px 10px;
+    font-size: 12.5px;
+    line-height: 1.35;
+    box-shadow: 0 6px 18px rgba(10, 14, 20, .28);
+    opacity: 0;
+    transform: translateY(6px) scale(.94);
+    transform-origin: 50% 100%;
+    transition: opacity .18s ease, transform .18s cubic-bezier(.34, 1.4, .5, 1);
+    pointer-events: none;
+  }
+  #bubble.show { opacity: 1; transform: none; pointer-events: auto; }
+
+  /* la colita, en dos triángulos para que conserve el borde negro */
+  #bubble::before,
+  #bubble::after {
+    content: "";
+    position: absolute;
+    left: calc(50% - 28px);
+    width: 0;
+    height: 0;
+    border-style: solid;
+  }
+  #bubble::before {
+    bottom: -18px;
+    border-width: 18px 14px 0 0;
+    border-color: var(--ink) transparent transparent transparent;
+  }
+  #bubble::after {
+    bottom: -13px;
+    border-width: 14px 10px 0 0;
+    border-color: var(--bg) transparent transparent transparent;
+  }
+
+  #bubble .title { font-weight: 600; letter-spacing: -.01em; }
+  #bubble .meta {
+    margin-top: 3px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  #bubble .meta b { color: var(--accent); font-weight: 500; }
+
+  /* ---------- el avatar ---------- */
+
+  #mascot {
+    width: var(--avatar);
+    filter: drop-shadow(0 5px 10px rgba(8, 12, 18, .4));
+    cursor: grab;
+    /* La caja del avatar es cuadrada pero el dibujo no la llena: sin esto, el
+       mouse "toca" al pingüino pasando por las esquinas vacías. Apagado el
+       rectángulo, sólo los trazos pintados del SVG atajan el puntero — y el
+       evento igual burbujea hasta acá para el hover y el arrastre. */
+    pointer-events: none;
+  }
+  #mascot svg { pointer-events: none; }
+  #mascot svg path,
+  #mascot svg ellipse,
+  #mascot svg circle,
+  #mascot svg rect { pointer-events: visiblePainted; }
+  #stage.dragging #mascot { cursor: grabbing; }
+
+  /* ---------- controles del hover ---------- */
+
+  /* Apilados al costado de la cabeza. Posición única: si se movieran al abrir
+     el panel, el botón se escapa de abajo del cursor y el segundo click no
+     cierra nada. */
+  #chrome {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;      /* fijo: anclado al tamaño del avatar se movían al cambiarlo */
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    opacity: 0;
+    transform: translateX(3px);
+    transition: opacity .14s ease, transform .14s ease;
+    pointer-events: none;
+  }
+  /* pegado al borde izquierdo de la pantalla no hay lugar: saltan al otro lado */
+  #stage.side-right #chrome {
+    left: auto;
+    right: 8px;
+    transform: translateX(-3px);
+  }
+  #stage.hot #chrome,
+  #chrome:focus-within,
+  #stage.open #chrome {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  #chrome button {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border: 1.5px solid var(--ink);
+    border-radius: 50%;
+    background: var(--bg);
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(8, 12, 18, .3);
+  }
+  /* los puntos y la cruz van en SVG: el glifo ⋯ se apoya en la línea de base
+     y queda descentrado dentro del círculo */
+  #chrome button svg { display: block; }
+  #chrome button:hover { background: var(--ink); color: var(--bg); }
+  #chrome button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  #btn-close:hover { background: #c0392b; border-color: #c0392b; color: #fff; }
+
+  /* ---------- panel de ajustes ---------- */
+
+  /* Abre ARRIBA del pingüino, no encima: si lo tapara, se comería los botones
+     del costado. Alto y ancho fijos, iguales en los tres tamaños — todo entra
+     sin scroll, que en una ventana angosta parte el layout. */
+  #panel {
+    position: absolute;
+    width: var(--panel-w);
+    left: 50%;
+    margin-left: calc(var(--panel-w) / -2);
+    bottom: calc(var(--avatar) + 14px);
+    height: var(--panel-h);
+    background: var(--bg);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    border-radius: 12px;
+    padding: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 13px;
+    box-shadow: 0 8px 22px rgba(8, 12, 18, .36);
+    z-index: 3;
+  }
+  /* `display: flex` le gana al [hidden] del navegador, así que hay que
+     apagarlo a mano o el panel no se oculta nunca. */
+  #panel[hidden] { display: none; }
+  .fld > span {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .fld .row { display: flex; gap: 4px; }
+  .fld .row button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 4px 2px;
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--ink);
+    font: 500 10.5px/1.2 var(--sans);
+    cursor: pointer;
+  }
+  .fld .row button:hover { border-color: var(--ink); }
+  .fld .row button[aria-pressed="true"] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--bg);
+  }
+  .fld select {
+    width: 100%;
+    padding: 4px 6px;
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--ink);
+    font: 500 11px/1.3 var(--sans);
+    cursor: pointer;
+  }
+  .fld select:hover { border-color: var(--ink); }
+  .fld :focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    #bubble, #chrome { transition: opacity .14s ease; }
+  }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="bubble" role="status" aria-live="polite">
+    <div class="title"></div>
+    <div class="meta"></div>
+  </div>
+
+  <div id="panel" hidden>
+    <div class="fld">
+      <span>Tamaño</span>
+      <div class="row" id="row-size"></div>
+    </div>
+    <label class="fld">
+      <span>Avatar</span>
+      <select id="sel-avatar"></select>
+    </label>
+    <label class="fld" id="fld-palette">
+      <span>Paleta</span>
+      <select id="sel-palette"></select>
+    </label>
+  </div>
+
+  <div id="chrome">
+    <button id="btn-menu" type="button" title="Ajustes" aria-label="Ajustes" aria-expanded="false">
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
+        <circle cx="3.2" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="12.8" cy="8" r="1.5"/>
+      </svg>
+    </button>
+    <button id="btn-close" type="button" title="Cerrar" aria-label="Cerrar">
+      <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+        <path d="M4 4 L12 12 M12 4 L4 12" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" fill="none"/>
+      </svg>
+    </button>
+  </div>
+
+  <div id="mascot"></div>
+</div>
+
+<script src="../penguin-mascot.js"></script>
+<script src="avatars.js"></script>
+<script src="avatars/penguin.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var stage   = document.getElementById('stage');
+  var host    = document.getElementById('mascot');
+  var bubble  = document.getElementById('bubble');
+  var panel   = document.getElementById('panel');
+  var btnMenu = document.getElementById('btn-menu');
+  var selAv   = document.getElementById('sel-avatar');
+  var selPal  = document.getElementById('sel-palette');
+  var fldPal  = document.getElementById('fld-palette');
+  var bTitle  = bubble.querySelector('.title');
+  var bMeta   = bubble.querySelector('.meta');
+
+  var SIZES = [
+    { id: 's', name: 'Chico' },
+    { id: 'm', name: 'Medio' },
+    { id: 'l', name: 'Grande' }
+  ];
+
+  var conf = { size: 'm', avatar: null, palette: null };
+
+  // El ancho de la ventana ya no dice de qué tamaño es (es fijo, para que el
+  // panel no cambie), así que el tamaño del avatar sale del atributo.
+  function applySize(id) {
+    conf.size = id;
+    document.documentElement.setAttribute('data-size', id);
+  }
+  var avatar = null;      // handle del avatar montado
+  var current = null;     // su definición en el registro
+
+  /* ---------- montar el avatar elegido ---------- */
+
+  function mountAvatar() {
+    var def = window.PetAvatars.get(conf.avatar);
+    if (!def) return;
+
+    if (avatar && avatar.destroy) avatar.destroy();
+    current = def;
+
+    var ok = def.palettes.some(function (p) { return p.id === conf.palette; });
+    if (!ok) conf.palette = def.palettes.length ? def.palettes[0].id : null;
+
+    avatar = def.mount(host, {
+      pointer: 'manual',
+      interactive: false,
+      palette: conf.palette,
+      label: def.name + ' de Claude Code'
+    });
+
+    avatar.setState(phase === 'working' ? 'working' : 'idle');
+  }
+
+  /* ---------- panel ---------- */
+
+  function fillSelect(el, items, activeId) {
+    el.textContent = '';
+    items.forEach(function (it) {
+      var o = document.createElement('option');
+      o.value = it.id;
+      o.textContent = it.name;
+      if (it.id === activeId) o.selected = true;
+      el.appendChild(o);
+    });
+  }
+
+  function renderPanel() {
+    var row = document.getElementById('row-size');
+    row.textContent = '';
+    SIZES.forEach(function (it) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = it.name;
+      b.setAttribute('aria-pressed', String(it.id === conf.size));
+      b.addEventListener("click", function () {
+        applySize(it.id);
+        window.pet.setSize(it.id);
+        renderPanel();
+      });
+      row.appendChild(b);
+    });
+
+    fillSelect(selAv, window.PetAvatars.list(), current && current.id);
+
+    var pals = current ? current.palettes : [];
+    fldPal.hidden = pals.length < 2;
+    if (!fldPal.hidden) fillSelect(selPal, pals, conf.palette);
+  }
+
+  selAv.addEventListener('change', function () {
+    conf.avatar = selAv.value;
+    conf.palette = null;
+    mountAvatar();
+    window.pet.setAvatar({ avatar: conf.avatar, palette: conf.palette });
+    renderPanel();
+  });
+
+  selPal.addEventListener('change', function () {
+    conf.palette = selPal.value;
+    if (avatar && avatar.setPalette) avatar.setPalette(conf.palette);
+    else mountAvatar();
+    window.pet.setAvatar({ avatar: current && current.id, palette: conf.palette });
+  });
+
+  function togglePanel(open) {
+    var next = open === undefined ? panel.hidden : open;
+    panel.hidden = !next;
+    stage.classList.toggle('open', next);
+    btnMenu.setAttribute('aria-expanded', String(next));
+    if (next) { hush(); renderPanel(); }
+  }
+
+  /* ---------- hover sólo sobre el dibujo ---------- */
+
+  // Del pingüino al botón se pasa por aire: sin esta demora los controles se
+  // apagan justo cuando vas a apretarlos.
+  var hotTimer = 0;
+
+  function hot(on) {
+    clearTimeout(hotTimer);
+    if (on) { stage.classList.add('hot'); return; }
+    hotTimer = setTimeout(function () {
+      if (panel.hidden) stage.classList.remove('hot');
+    }, 420);
+  }
+
+  // La ventana ignora el mouse salvo cuando el puntero está sobre algo
+  // dibujado. Con pointer-events apagado en la caja del avatar y prendido en
+  // los trazos del SVG, elementFromPoint devuelve el pingüino sólo si estás
+  // realmente sobre él — el resto del rectángulo es aire y los clicks pasan
+  // de largo al escritorio.
+  var interactive = false;   // arranca igual que main: ignorando el mouse
+
+  function setInteractive(on) {
+    if (on === interactive) return;
+    interactive = on;
+    window.pet.setInteractive(on);
+  }
+
+  window.addEventListener('mousemove', function (e) {
+    if (!panel.hidden || down) { setInteractive(true); hot(true); return; }
+    var el = document.elementFromPoint(e.clientX, e.clientY);
+    var over = !!(el && (el.closest('#chrome') || el.closest('#mascot')));
+    setInteractive(over);
+    hot(over);
+  });
+
+  document.addEventListener('mouseleave', function () {
+    if (panel.hidden && !down) { setInteractive(false); hot(false); }
+  });
+
+  btnMenu.addEventListener('click', function (e) { e.stopPropagation(); togglePanel(); });
+  document.getElementById('btn-close').addEventListener('click', function () { window.pet.close(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') togglePanel(false); });
+  host.addEventListener('pointerdown', function () { togglePanel(false); });
+
+  /* ---------- globo ---------- */
+
+  var bubbleTimer = 0;
+
+  function say(title, meta, ms) {
+    if (!panel.hidden) return;   // no tapar el panel abierto
+    bTitle.textContent = title;
+    bMeta.innerHTML = meta || '';
+    bubble.classList.add('show');
+    clearTimeout(bubbleTimer);
+    if (ms) bubbleTimer = setTimeout(hush, ms);
+  }
+
+  function hush() {
+    clearTimeout(bubbleTimer);
+    bubble.classList.remove('show');
+  }
+
+  function human(ms) {
+    var s = Math.round(ms / 1000);
+    if (s < 60) return s + ' s';
+    var m = Math.floor(s / 60);
+    if (m < 60) return m + ' min ' + (s % 60) + ' s';
+    return Math.floor(m / 60) + ' h ' + (m % 60) + ' min';
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c];
+    });
+  }
+
+  /* ---------- estados ---------- */
+
+  var phase = 'idle';
+  var swap = 0;          // alterna teclear / levantar la vista mientras trabaja
+  var swapAt = 0;
+
+  window.pet.onConf(function (c) {
+    applySize(c.size || "m");
+    conf.avatar = c.avatar;
+    conf.palette = c.palette;
+    applySide(c.side);
+    mountAvatar();
+  });
+
+  // De qué lado van los controles lo decide el proceso principal, que sabe
+  // dónde cayó la ventana en la pantalla.
+  function applySide(side) {
+    stage.classList.toggle('side-right', side === 'right');
+  }
+  window.pet.onSide(applySide);
+
+  window.pet.onState(function (s) {
+    var was = phase;
+    phase = s.phase;
+    if (!avatar) return;
+
+    if (s.phase === 'working') {
+      if (was !== 'working') { swap = 0; swapAt = Date.now(); }
+      hush();
+      return;
+    }
+
+    avatar.setState('idle');
+
+    if (s.phase === 'waiting') {
+      say('Te está esperando.', s.project ? 'en <b>' + esc(s.project) + '</b>' : 'necesita que le contestes');
+    } else if (s.phase === 'done') {
+      avatar.poke();
+      say(
+        'Terminó.',
+        (s.project ? '<b>' + esc(s.project) + '</b>' : 'claude code') +
+        (s.took ? ' · ' + human(s.took) : '')
+      );
+    } else {
+      hush();
+    }
+  });
+
+  // mientras trabaja alterna entre teclear (4-9 s) y levantar la vista (2-4 s)
+  setInterval(function () {
+    if (phase !== 'working' || !avatar) return;
+    var now = Date.now();
+    if (now < swapAt) return;
+    swap = swap ? 0 : 1;
+    swapAt = now + (swap ? 2000 + Math.random() * 2000 : 4000 + Math.random() * 5000);
+    avatar.setState(swap ? 'thinking' : 'working');
+  }, 250);
+
+  /* ---------- el cursor de todo el escritorio ---------- */
+
+  window.pet.onCursor(function (p) {
+    if (phase === 'working' || !avatar) return;   // laburando no mira el mouse
+    avatar.look(p.x, p.y);
+  });
+
+  /* ---------- arrastrar / tocar ---------- */
+
+  var down = null;
+
+  host.addEventListener('pointerdown', function (e) {
+    if (e.button !== 0) return;
+    down = { x: e.screenX, y: e.screenY, t: Date.now(), moved: false };
+    stage.classList.add('dragging');
+    window.pet.dragStart();
+  });
+
+  window.addEventListener('pointermove', function (e) {
+    if (!down) return;
+    if (Math.abs(e.screenX - down.x) > 3 || Math.abs(e.screenY - down.y) > 3) down.moved = true;
+  });
+
+  window.addEventListener('pointerup', function () {
+    if (!down) return;
+    window.pet.dragEnd();
+    stage.classList.remove('dragging');
+    if (!down.moved && Date.now() - down.t < 400 && avatar) {   // click sin arrastrar = toque
+      avatar.poke();
+      hush();
+    }
+    down = null;
+  });
+
+  host.addEventListener('contextmenu', function (e) {
+    e.preventDefault();
+    window.pet.menu();
+  });
+
+  bubble.addEventListener('click', hush);
+
+  // por si 'conf' no llegara (arranque raro): montar igual el primero del registro
+  setTimeout(function () { if (!avatar) mountAvatar(); }, 600);
+})();
+</script>
+</body>
+</html>
