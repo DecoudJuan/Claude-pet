@@ -89,6 +89,12 @@ window.PetAvatars.register({
 Archivo en `pet/avatars/<id>.js` y un `<script>` en `pet/pet.html`. Nada más:
 el panel de ajustes lee el registro solo.
 
+**Dónde va el dibujo.** Si el avatar es chico, todo en ese mismo archivo. Si es
+grande, separalo como está el pingüino: el dibujo en un archivo propio en la
+raíz — reutilizable en cualquier página web, sin nada del pet — y en
+`pet/avatars/<id>.js` sólo el `register()` que lo envuelve. Son dos `<script>`
+en vez de uno.
+
 ## La notebook es un dato aparte
 
 La máquina no es del avatar: viene de `PetDevices` y el usuario la elige. Llega
