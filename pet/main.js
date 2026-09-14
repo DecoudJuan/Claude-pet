@@ -19,9 +19,9 @@ const os = require('os');
 // taparlo: así los controles del costado nunca quedan sepultados. Lo que sobra
 // es transparente y, gracias al click-through, tampoco atrapa el mouse.
 const SIZES = {
-  s: { w: 240, h: 396 },
-  m: { w: 240, h: 426 },
-  l: { w: 288, h: 468 }
+  s: { w: 240, h: 442 },
+  m: { w: 240, h: 472 },
+  l: { w: 288, h: 514 }
 };
 const DEFAULT_SIZE = 'm';
 
@@ -40,6 +40,7 @@ const MUTED = path.join(ROOT, 'muted');
 const AUTO = process.argv.includes('--auto');
 const QUIT_AFTER_MS = 25000;   // gracia desde que se va la última sesión
 const BOOT_GRACE_MS = 30000;   // no cerrarse apenas arranca
+const WAITING_TTL_MS = 40000;  // cuánto dura el aviso de «te espera»
 const bootAt = Date.now();
 let emptySince = 0;
 
@@ -120,8 +121,16 @@ let doneDetail = null;
 function project(sessions) {
   const now = Date.now();
 
-  const waiting = sessions.find(function (s) { return s.state === 'waiting'; });
-  const working = sessions.filter(function (s) { return s.state === 'working'; });
+  // Cuando contestás un pedido de permiso no se dispara ningún hook hasta que
+  // termina el turno, así que el aviso se apagaría recién ahí. Vence solo: a
+  // los 40 s la sesión vuelve a contarse como trabajando, que es lo que pasó.
+  const waiting = sessions.find(function (s) {
+    return s.state === 'waiting' && now - (s.updatedAt || 0) < WAITING_TTL_MS;
+  });
+  const working = sessions.filter(function (s) {
+    return s.state === 'working' ||
+           (s.state === 'waiting' && now - (s.updatedAt || 0) >= WAITING_TTL_MS);
+  });
 
   if (waiting) {
     lastPhase = 'waiting';
@@ -261,6 +270,7 @@ function createWindow() {
       size: SIZES[c.size] ? c.size : DEFAULT_SIZE,
       avatar: c.avatar || null,
       palette: c.palette || null,
+      device: c.device || null,
       side: sideFor(win.getBounds())
     });
     lastSent = '';
@@ -315,7 +325,11 @@ ipcMain.on('interactive', function (_e, on) {
 });
 
 ipcMain.on('set-avatar', function (_e, pick) {
-  writeConf({ avatar: (pick && pick.avatar) || null, palette: (pick && pick.palette) || null });
+  writeConf({
+    avatar: (pick && pick.avatar) || null,
+    palette: (pick && pick.palette) || null,
+    device: (pick && pick.device) || null
+  });
 });
 
 // La X del hover: cerrar a mano lo silencia hasta la próxima sesión.

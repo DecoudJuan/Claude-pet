@@ -21,7 +21,7 @@
     /* El panel mide siempre lo mismo, en los tres tamaños: el de medio con
        algo de aire. Ni apretado en chico ni desparramado en grande. */
     --panel-w: 228px;
-    --panel-h: 208px;
+    --panel-h: 254px;
   }
   :root[data-size="s"] { --avatar: 152px; }
   :root[data-size="l"] { --avatar: 224px; }
@@ -200,12 +200,12 @@
     color: var(--ink);
     border: 2px solid var(--ink);
     border-radius: 12px;
-    padding: 10px;
+    padding: 16px 12px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 13px;
+    gap: 14px;
     box-shadow: 0 8px 22px rgba(8, 12, 18, .36);
     z-index: 3;
   }
@@ -278,6 +278,10 @@
       <span>Paleta</span>
       <select id="sel-palette"></select>
     </label>
+    <label class="fld">
+      <span>Notebook</span>
+      <select id="sel-device"></select>
+    </label>
   </div>
 
   <div id="chrome">
@@ -298,6 +302,8 @@
 
 <script src="../penguin-mascot.js"></script>
 <script src="avatars.js"></script>
+<script src="devices.js"></script>
+<script src="devices/laptops.js"></script>
 <script src="avatars/penguin.js"></script>
 <script>
 (function () {
@@ -308,8 +314,10 @@
   var bubble  = document.getElementById('bubble');
   var panel   = document.getElementById('panel');
   var btnMenu = document.getElementById('btn-menu');
+  var chromeEl = document.getElementById('chrome');
   var selAv   = document.getElementById('sel-avatar');
   var selPal  = document.getElementById('sel-palette');
+  var selDev  = document.getElementById('sel-device');
   var fldPal  = document.getElementById('fld-palette');
   var bTitle  = bubble.querySelector('.title');
   var bMeta   = bubble.querySelector('.meta');
@@ -320,7 +328,7 @@
     { id: 'l', name: 'Grande' }
   ];
 
-  var conf = { size: 'm', avatar: null, palette: null };
+  var conf = { size: 'm', avatar: null, palette: null, device: null };
 
   // El ancho de la ventana ya no dice de qué tamaño es (es fijo, para que el
   // panel no cambie), así que el tamaño del avatar sale del atributo.
@@ -347,6 +355,7 @@
       pointer: 'manual',
       interactive: false,
       palette: conf.palette,
+      device: window.PetDevices.get(conf.device),
       label: def.name + ' de Claude Code'
     });
 
@@ -387,6 +396,9 @@
     var pals = current ? current.palettes : [];
     fldPal.hidden = pals.length < 2;
     if (!fldPal.hidden) fillSelect(selPal, pals, conf.palette);
+
+    var dev = window.PetDevices.get(conf.device);
+    fillSelect(selDev, window.PetDevices.list(), dev && dev.id);
   }
 
   selAv.addEventListener('change', function () {
@@ -402,6 +414,14 @@
     if (avatar && avatar.setPalette) avatar.setPalette(conf.palette);
     else mountAvatar();
     window.pet.setAvatar({ avatar: current && current.id, palette: conf.palette });
+  });
+
+  selDev.addEventListener('change', function () {
+    conf.device = selDev.value;
+    var dev = window.PetDevices.get(conf.device);
+    if (avatar && avatar.setDevice) avatar.setDevice(dev);
+    else mountAvatar();
+    window.pet.setAvatar({ avatar: current && current.id, palette: conf.palette, device: conf.device });
   });
 
   function togglePanel(open) {
@@ -498,6 +518,7 @@
     applySize(c.size || "m");
     conf.avatar = c.avatar;
     conf.palette = c.palette;
+    conf.device = c.device;
     applySide(c.side);
     mountAvatar();
   });
