@@ -1,6 +1,6 @@
 ---
 name: device-designer
-description: Agregar o ajustar notebooks para Claude Pet — la máquina sobre la que trabaja el avatar. Usala cuando alguien pida "quiero una MacBook midnight", "agregá una Dell", "hacé la HP en gris", "add a laptop", "otra notebook negra", o cuando haya que cambiar los colores o el logo de una existente. Las notebooks son un registro aparte del de avatares: cualquier avatar hereda todas.
+description: Agregar o ajustar notebooks para Claude Pet — la máquina sobre la que trabaja el avatar. Usala cuando alguien pida "quiero una MacBook midnight", "agregá una Dell", "hacé la HP en gris", "add a laptop", "otra notebook negra", o cuando haya que cambiar los colores o el logo de una existente. Las notebooks son un registro aparte del de avatares, así que cualquier avatar hereda todas.
 ---
 
 # Agregar una notebook a Claude Pet

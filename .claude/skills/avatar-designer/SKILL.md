@@ -1,6 +1,6 @@
 ---
 name: avatar-designer
-description: Diseñar e implementar un avatar nuevo para Claude Pet — la mascota de escritorio que refleja el estado de Claude Code. Un avatar puede ser cualquier cosa que se dibuje: un animal, un objeto, un robot, una persona, un personaje inventado. Usala siempre que alguien quiera crear, diseñar, agregar o cambiar el personaje del pet, sin importar qué personaje sea — "creá un avatar", "hacé una mascota nueva", "quiero un <lo que sea> para el pet", "add an avatar", "diseñá un personaje para claude-pet" — y también cuando haya que dibujar o ajustar los estados (idle, working, thinking, waiting) o la notebook de un avatar que ya existe. Cubre el contrato que tiene que cumplir, qué debe comunicar cada estado, cómo se registra y qué errores de dibujo rompen la ventana.
+description: Diseñar e implementar un avatar nuevo para Claude Pet — la mascota de escritorio que refleja el estado de Claude Code. Un avatar puede ser cualquier cosa que se dibuje — un animal, un objeto, un robot, una persona, un personaje inventado. Usala siempre que alguien quiera crear, diseñar, agregar o cambiar el personaje del pet, sin importar qué personaje sea — "creá un avatar", "hacé una mascota nueva", "quiero un <lo que sea> para el pet", "add an avatar", "diseñá un personaje para claude-pet" — y también cuando haya que dibujar o ajustar los estados (idle, working, thinking, waiting) o la notebook de un avatar que ya existe. Cubre el contrato que tiene que cumplir, qué debe comunicar cada estado, cómo se registra y qué errores de dibujo rompen la ventana.
 ---
 
 # Diseñar un avatar para Claude Pet
@@ -124,13 +124,25 @@ var B = window.PetBody;   // core/body.js, en la raíz
 B.torso        // el path de la silueta — usalo tal cual
 B.belly        // el path del frente
 B.TORSO_TOP    // 162 — de acá para abajo es de todos
-B.HEAD_BOTTOM  // 186 — hasta acá te llega la cabeza
+B.HEAD         // la caja del cráneo: cx 120, top 30, bottom 186, width 184
+B.LIMITS       // hasta dónde puede llegar un accesorio
 B.HANDS        // dónde van tus manos sobre el teclado
 B.clipRect     // el recorte contra el borde de abajo
 ```
 
 Si querés estilizar las proporciones — el pingüino se angosta un 5 % para no
 verse rechoncho — aplicá la transformación **sólo a tu cabeza**. Al torso no.
+
+**La cabeza tiene caja, la forma no.** El cráneo entra en `B.HEAD`: puede ser
+redondo, cuadrado, alargado o triangular, pero no del doble de ancho que el de
+otro avatar — se dejarían de leer como parte de la misma familia y taparía la
+notebook. Y el alto tampoco es libre: el pet reserva un cuadrado, y una cabeza
+que se estire sin límite se sale del cuadro o achica todo lo demás.
+
+**Los accesorios sí se salen del cráneo, y está bien.** Orejas altas, cuernos,
+una cola, un sombrero: viven afuera de `B.HEAD`, con un único techo en
+`B.LIMITS` (x 8 a 232, y de 8 para abajo). Más allá el pet los recorta. Los
+auriculares del pingüino usan 18 a 222, bien adentro.
 
 ### 2. El avatar no dibuja la computadora
 
@@ -159,7 +171,8 @@ Romper cualquiera de estas se nota en la ventana, no en el código:
 | | |
 |---|---|
 | **Cuadrado** | El pet reserva una caja cuadrada (152, 182 o 224 px). Un dibujo más alto que ancho se ve corrido. |
-| **Torso canónico** | El cuerpo sale de `PetBody`, sin copiarlo ni retocarlo. Tu libertad empieza en `PetBody.HEAD_BOTTOM`. |
+| **Torso canónico** | El cuerpo sale de `PetBody`, sin copiarlo ni retocarlo. |
+| **Cabeza con caja** | La forma es libre; el tamaño no. El cráneo entra en `PetBody.HEAD` y nada se estira más allá de `PetBody.LIMITS`. |
 | **Apoyado abajo** | El borde inferior se apoya sobre la barra de tareas. El aire va arriba, nunca abajo. |
 | **Escalable** | Se monta a 152 y a 224 px sin retocar. SVG, o canvas que lea su tamaño. |
 | **Transparente de verdad** | Las partes vacías tienen que dejar pasar el mouse. En SVG sale gratis (`visiblePainted`); en canvas el rectángulo entero ataja el puntero y el hover se activa pasando cerca. |
@@ -217,6 +230,8 @@ donde `payload.json` es `{"session_id":"test","cwd":"/ruta/al/proyecto"}`.
 
 ## Checklist antes de dar por terminado
 
+- [ ] El torso sale de `PetBody`, sin copiarlo ni retocarlo.
+- [ ] El cráneo entra en `B.HEAD` y los accesorios en `B.LIMITS`.
 - [ ] Los cuatro estados se distinguen a 152 px, de reojo.
 - [ ] `waiting` no se parece a `idle`.
 - [ ] `thinking` no parece que terminó.
