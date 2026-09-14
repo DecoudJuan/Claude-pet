@@ -231,9 +231,17 @@
 
     // La notebook viene de afuera: el avatar sólo dibuja la silueta y le pide
     // al device la tapa y el logo. Sin device, tapa sin marca.
+    // Un device puede venir de un archivo de terceros: sus colores entran a una
+    // custom property, así que se aceptan sólo si parecen un color.
+    function colour(v, fallback) {
+      return /^(#[0-9a-fA-F]{3,8}|[a-zA-Z]{3,20}|rgba?\([\d\s.,%]+\)|hsla?\([\d\s.,%deg]+\))$/.test(String(v || ''))
+        ? String(v)
+        : fallback;
+    }
+
     function applyDevice(dev) {
-      svg.style.setProperty('--pm-lap', (dev && dev.lid) || '#1f252d');
-      svg.style.setProperty('--pm-lap-badge', (dev && dev.badgeColor) || '#d8dadd');
+      svg.style.setProperty('--pm-lap', colour(dev && dev.lid, '#1f252d'));
+      svg.style.setProperty('--pm-lap-badge', colour(dev && dev.badgeColor, '#d8dadd'));
       lapSlot.innerHTML = (window.PetDevices && dev)
         ? window.PetDevices.badgeMarkup(dev, 120, 206)
         : '';
