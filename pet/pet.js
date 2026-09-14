@@ -135,7 +135,7 @@
 
   /* ---------- hover sólo sobre el dibujo ---------- */
 
-  // Del pingüino al botón se pasa por aire: sin esta demora los controles se
+  // Del avatar al botón se pasa por aire: sin esta demora los controles se
   // apagan justo cuando vas a apretarlos.
   var hotTimer = 0;
 
@@ -149,7 +149,7 @@
 
   // La ventana ignora el mouse salvo cuando el puntero está sobre algo
   // dibujado. Con pointer-events apagado en la caja del avatar y prendido en
-  // los trazos del SVG, elementFromPoint devuelve el pingüino sólo si estás
+  // los trazos del SVG, elementFromPoint devuelve el avatar sólo si estás
   // realmente sobre él — el resto del rectángulo es aire y los clicks pasan
   // de largo al escritorio.
   var interactive = false;   // arranca igual que main: ignorando el mouse

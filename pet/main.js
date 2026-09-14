@@ -1,5 +1,5 @@
 /*
- * claude-pet — ventana de escritorio con el pingüino.
+ * claude-pet — ventana de escritorio con el avatar.
  *
  * Transparente, sin marco, siempre encima, arrastrable. Vigila el directorio de
  * estado que escriben los hooks de Claude Code y traduce eso a los estados del
@@ -15,7 +15,7 @@ const os = require('os');
 // El panel de ajustes mide siempre lo mismo, así que la ventana no puede ser
 // más angosta que él: cambiar de tamaño mueve el alto y el avatar, nunca el
 // ancho. El sobrante a los costados es transparente, no se ve.
-// El alto deja lugar para que el panel abra ARRIBA del pingüino en vez de
+// El alto deja lugar para que el panel abra ARRIBA del avatar en vez de
 // taparlo: así los controles del costado nunca quedan sepultados. Lo que sobra
 // es transparente y, gracias al click-through, tampoco atrapa el mouse.
 const SIZES = {
@@ -73,7 +73,7 @@ function defaultPosition(size) {
   return { x: wa.x + 14, y: wa.y + wa.height - size.h };
 }
 
-// Los controles van a la izquierda del pingüino, salvo que la ventana esté
+// Los controles van a la izquierda del avatar, salvo que la ventana esté
 // pegada al borde izquierdo de la pantalla y no quede lugar.
 function sideFor(bounds) {
   const wa = screen.getDisplayMatching(bounds).workArea;
