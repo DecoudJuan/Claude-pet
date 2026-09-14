@@ -260,6 +260,9 @@ Claude-pet/
 │   │                     el tuyo. Es la única puerta por la que entra el
 │   │                     límite de uso — ningún hook lo trae.
 │   ├── quota.js          Lee esa cuota y decide si hay que dormir.
+│   ├── turn.js           El latido del turno. Ctrl+C no dispara ningún hook,
+│   │                     así que se confirma contra el transcript: mientras
+│   │                     crece, el turno vive.
 │   └── package.json
 │
 ├── demo/

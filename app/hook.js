@@ -79,6 +79,9 @@ function write() {
     sessionId: id,
     state: state,
     cwd: payload.cwd || prev.cwd || '',
+    // El latido del turno: Ctrl+C no dispara ningún hook, pero el transcript
+    // deja de crecer. Ver app/turn.js.
+    transcript: payload.transcript_path || prev.transcript || '',
     lastTool: payload.tool_name || (KIND === 'done' ? '' : prev.lastTool || ''),
     // Notification trae en `message` qué está pidiendo ("Claude needs your
     // permission to use Bash"). Sin esto el globo sólo puede decir "te espera",

@@ -12,6 +12,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const quota = require('./quota');
+const turn = require('./turn');
 
 // El panel de ajustes mide siempre lo mismo, así que la ventana no puede ser
 // más angosta que él: cambiar de tamaño mueve el alto y el avatar, nunca el
@@ -153,8 +154,11 @@ function project(sessions) {
   });
   const working = sessions.filter(function (s) {
     if (now - (s.updatedAt || 0) >= WORKING_TTL_MS) return false;
-    return s.state === 'working' ||
-           (s.state === 'waiting' && now - (s.updatedAt || 0) >= WAITING_TTL_MS);
+    const claims = s.state === 'working' ||
+                   (s.state === 'waiting' && now - (s.updatedAt || 0) >= WAITING_TTL_MS);
+    // Decir que trabaja no alcanza: si cortaste el turno con Ctrl+C ningún hook
+    // lo avisa, así que se confirma contra el latido del transcript.
+    return claims && turn.isActive(s, now);
   });
 
   if (waiting) {

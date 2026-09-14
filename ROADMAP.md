@@ -126,6 +126,19 @@ que se rompió.
 - **Tiene prioridad sobre todo lo demás**: si no hay tokens, no está
   trabajando ni terminó — está dormido.
 
+### 12. El latido del turno
+
+- **Ctrl+C no dispara ningún hook.** Ni `Stop` ni `StopFailure`: la sesión
+  quedaba marcada como trabajando y el avatar tecleaba para siempre.
+- **El transcript es el único rastro.** Mientras el turno corre, crece; cuando
+  se corta, deja de crecer. El latido es la fecha de modificación de ese
+  archivo, sin lanzar un proceso por evento.
+- **El umbral salió de medir, no de adivinar**: en una sesión larga, el 96,5 %
+  de los intervalos entre entradas son menores a 30 s. Por eso 25 s.
+- **Con una excepción**: una llamada a herramienta larga puede estar minutos
+  callada y sigue trabajando. Si la última entrada es una tool que no devolvió,
+  el turno sigue vivo — hasta los 3 minutos, donde se corta igual.
+
 ---
 
 ## Falta
