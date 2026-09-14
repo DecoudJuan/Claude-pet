@@ -41,6 +41,11 @@ const AUTO = process.argv.includes('--auto');
 const QUIT_AFTER_MS = 25000;   // gracia desde que se va la última sesión
 const BOOT_GRACE_MS = 30000;   // no cerrarse apenas arranca
 const WAITING_TTL_MS = 40000;  // cuánto dura el aviso de «te espera»
+// Si cancelás un turno con Ctrl+C puede no dispararse ningún hook, y la sesión
+// se quedaría en "working" para siempre: el avatar tecleando solo. Este techo
+// es la garantía de que eso no pasa. Generoso a propósito — un turno largo de
+// verdad tiene que poder durar.
+const WORKING_TTL_MS = 15 * 60 * 1000;
 const bootAt = Date.now();
 let emptySince = 0;
 
@@ -128,6 +133,7 @@ function project(sessions) {
     return s.state === 'waiting' && now - (s.updatedAt || 0) < WAITING_TTL_MS;
   });
   const working = sessions.filter(function (s) {
+    if (now - (s.updatedAt || 0) >= WORKING_TTL_MS) return false;
     return s.state === 'working' ||
            (s.state === 'waiting' && now - (s.updatedAt || 0) >= WAITING_TTL_MS);
   });
@@ -234,11 +240,23 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      nodeIntegrationInSubFrames: false,
+      sandbox: true,          // el renderer corre sin acceso a Node
+      webviewTag: false,
+      spellcheck: false,
+      enableBlinkFeatures: ''
     }
   });
 
   win.loadFile(path.join(__dirname, 'pet.html'));
+
+  // La ventana no navega a ningún lado ni abre ventanas: es una sola página
+  // local. Dejarlo explícito cierra el camino por el que un avatar de terceros
+  // podría sacar la ventana de su propia página.
+  win.webContents.setWindowOpenHandler(function () { return { action: 'deny' }; });
+  win.webContents.on('will-navigate', function (e) { e.preventDefault(); });
+  win.webContents.on('will-attach-webview', function (e) { e.preventDefault(); });
 
   // La ventana no tiene dónde mostrar un error: sin esto, un fallo del renderer
   // es una ventana muda y no hay forma de enterarse.
@@ -324,11 +342,20 @@ ipcMain.on('interactive', function (_e, on) {
   win.setIgnoreMouseEvents(!on, { forward: true });
 });
 
+// Los ids vienen del renderer y terminan en un archivo de configuración, así
+// que se acotan a lo que un id puede ser. Nada de acá se ejecuta ni se
+// interpola en una ruta, pero un id de 4 MB tampoco tiene por qué caber.
+function cleanId(v) {
+  if (typeof v !== 'string') return null;
+  const id = v.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
+  return id || null;
+}
+
 ipcMain.on('set-avatar', function (_e, pick) {
   writeConf({
-    avatar: (pick && pick.avatar) || null,
-    palette: (pick && pick.palette) || null,
-    device: (pick && pick.device) || null
+    avatar: cleanId(pick && pick.avatar),
+    palette: cleanId(pick && pick.palette),
+    device: cleanId(pick && pick.device)
   });
 });
 
