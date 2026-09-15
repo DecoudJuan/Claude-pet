@@ -42,7 +42,7 @@ Y tiene que devolver un handle con estos cuatro métodos. Son obligatorios:
 
 | Método | Cuándo lo llama el pet |
 |---|---|
-| `setState(estado)` | `'idle'` · `'working'` · `'thinking'` · `'waiting'` · `'sleeping'` |
+| `setState(estado)` | `'idle'` · `'working'` · `'thinking'` · `'waiting'` · `'sleeping'` · `'greeting'` · `'farewell'` |
 | `look(x, y)` | Cada 80 ms con la posición del cursor **relativa a la ventana**. Puede ser negativa o mayor que la ventana: el cursor está en cualquier parte de la pantalla. |
 | `poke()` | Cuando lo tocan, y cuando termina un turno. |
 | `destroy()` | Al cambiar de avatar. Soltá timers, listeners y `requestAnimationFrame`. |
@@ -125,7 +125,7 @@ del límite.
 El pingüino le aplica un `scale(0.95 1)` a **su cabeza** para verse menos
 rechoncho. Al torso no: eso sería desviarse del canon.
 
-### Los tres estados
+### Los estados
 
 - **`idle`** — no hay nada corriendo. Es el estado donde el avatar debería
   seguir el cursor y hacer su vida: parpadear, mirar alrededor.
@@ -139,8 +139,52 @@ rechoncho. Al torso no: eso sería desviarse del canon.
   cerrados, sin computadora, y sin seguir el cursor — está durmiendo, no
   distraído.
 
+- **`greeting`** y **`farewell`** — la entrada y la salida. Ver abajo.
+
 El pet no le manda `done` al avatar: eso lo cuenta el globo de
 diálogo, que es del pet, no del avatar. En `done` sí le pega un `poke()`.
+
+### Entrar y salir
+
+El pet aparece cuando arranca una sesión de Claude Code y se va cuando se apaga
+la última. Antes las dos cosas pasaban de golpe: la ventana estaba o no estaba.
+
+Ahora hay una entrada y una salida, y son de todos los avatares:
+
+- **`greeting`** — llega una sola vez, apenas se monta el avatar. El dibujo
+  **asoma desde abajo del cuadro**, como si subiera desde atrás de la barra de
+  tareas, y se queda quieto mirando al frente.
+- **`farewell`** — llega una sola vez, **justo antes de que la app se cierre**.
+  El dibujo se hunde por el mismo camino y se queda abajo: lo que sigue es que
+  la ventana desaparece, así que volver al centro sería mostrarlo entero justo
+  después de despedirse.
+
+El «Hi!» y el «Bye!» **no los dibuja el avatar**: los dice el pet, en el mismo
+globo con el que cuenta todo lo demás. Vos ponés el cuerpo.
+
+Los dos duran lo mismo, y ese número vive en un solo lugar:
+
+```js
+window.PetGreeting.MS        // 2000 — lo que dura el saludo
+window.PetGreeting.HELLO     // { text: 'Hi!',  state: 'greeting' }
+window.PetGreeting.GOODBYE   // { text: 'Bye!', state: 'farewell' }
+```
+
+Está en `core/greeting.js` porque lo comparten tres piezas que no se conocen
+entre sí: la ventana lo muestra, cada avatar dibuja la pose, y el **proceso
+principal tiene que esperar** a que el «Bye!» termine antes de cerrar la app.
+Si esos números se separaran, el adiós se cortaría a la mitad.
+
+`MS` es lo que dura el **estado**, no necesariamente tu animación. Entrando
+podés asomar más rápido y quedarte quieto el resto — el pingüino sube en 0,6 s.
+Saliendo no: la animación tiene que terminar en `MS`, porque ahí se cierra.
+
+**Sin balanceo.** Entrar y salir es subir y bajar derecho — nada de vaivenes ni
+rebotes. Se ve una vez por sesión, y un personaje que se tambalea al aparecer
+se lee como un tropiezo, no como un saludo.
+
+> El error a evitar: animar el `farewell` y que termine volviendo al centro. El
+> último cuadro que se ve es el que queda, y la app se cierra ahí.
 
 ---
 
@@ -191,8 +235,8 @@ No hay paso 4. No hay que tocar `main.js`, ni el panel, ni el CSS.
 ## Un esqueleto que funciona
 
 Un avatar completo y mínimo. Cumple las dos reglas — torso canónico y la
-máquina dibujada por el device — y responde a los cinco estados. Copialo y
-cambiale la cabeza.
+máquina dibujada por el device — y responde a los siete estados, la entrada y
+la salida incluidas. Copialo y cambiale la cabeza.
 
 ```js
 window.PetAvatars.register({
@@ -250,6 +294,8 @@ window.PetAvatars.register({
       if (state === 'working')       { tx = 0;    ty = 0.9;  }  // mira el teclado
       else if (state === 'thinking') { tx = 0.5;  ty = -0.4; }  // levanta la vista
       else if (state === 'sleeping') { tx = 0.06; ty = 0.55; }  // duerme: no sigue el cursor
+      else if (state === 'greeting' ||
+               state === 'farewell') { tx = 0;    ty = -0.1; }  // saluda: de frente y quieto
       sx += (tx - sx) * 0.14;
       sy += (ty - sy) * 0.14;
       head.setAttribute('transform',
@@ -261,15 +307,33 @@ window.PetAvatars.register({
       setState: function (s) {
         state = s;
         // la máquina se ve mientras hay trabajo a medio hacer. waiting sigue a
-        // mitad de tarea; sleeping no — sin tokens no hay nada que hacer.
-        lap.setAttribute('opacity', (s === 'idle' || s === 'sleeping') ? 0 : 1);
+        // mitad de tarea; sleeping no — sin tokens no hay nada que hacer, y
+        // entrando o saliendo tampoco: todavía no empezó, o ya terminó.
+        var trabajando = (s === 'working' || s === 'thinking' || s === 'waiting');
+        lap.setAttribute('opacity', trabajando ? 1 : 0);
         // y en waiting las manos se despegan del teclado
         lap.querySelectorAll('.hand').forEach(function (h) {
           h.setAttribute('transform', s === 'waiting' ? 'translate(0 -7)' : '');
         });
+        // entrar y salir: asoma desde abajo del cuadro y se hunde por el mismo
+        // camino. Derecho, sin rebote, y el farewell se queda abajo — después
+        // de eso la ventana se cierra.
+        if (s === 'greeting' || s === 'farewell') {
+          var G = window.PetGreeting;
+          var desde = s === 'greeting' ? 'translateY(150px)' : 'translateY(0)';
+          var hasta = s === 'greeting' ? 'translateY(0)' : 'translateY(150px)';
+          svg.animate(
+            [{ transform: desde, opacity: s === 'greeting' ? 0 : 1 },
+             { transform: hasta, opacity: s === 'greeting' ? 1 : 0 }],
+            { duration: s === 'greeting' ? 620 : G.MS, fill: 'forwards',
+              easing: s === 'greeting' ? 'cubic-bezier(.22,.68,.3,1)'
+                                       : 'cubic-bezier(.5,0,.9,.35)' }
+          );
+        }
       },
       look: function (x, y) {
-        if (state === 'working' || state === 'sleeping') return;   // no mira el mouse
+        // laburando, durmiendo o saludando no mira el mouse
+        if (state !== 'idle' && state !== 'waiting') return;
         var r = svg.getBoundingClientRect();
         var c = function (v) { return Math.max(-1, Math.min(1, v)); };
         tx = c((x - r.left - r.width / 2) / (r.width * 1.4));

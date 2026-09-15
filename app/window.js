@@ -13,6 +13,7 @@
   var stage   = document.getElementById('stage');
   var host    = document.getElementById('mascot');
   var bubble  = document.getElementById('bubble');
+  var greetEl = document.getElementById('greet');
   var panel   = document.getElementById('panel');
   var btnMenu = document.getElementById('btn-menu');
   var chromeEl = document.getElementById('chrome');
@@ -60,7 +61,9 @@
       label: def.name + ' de Claude Code'
     });
 
-    avatar.setState(phase === 'working' ? 'working' : 'idle');
+    // Si estás cambiando de avatar justo mientras saluda, el nuevo entra
+    // saludando también: la pose la manda el saludo hasta que se termine.
+    avatar.setState(greeting ? greeting.state : poseFor(phase));
   }
 
   /* ---------- panel ---------- */
@@ -186,6 +189,11 @@
   // que no hace falta dejar abierta.
   function say(title, parts, ms) {
     if (!panel.hidden) return;   // no tapar el panel abierto
+    // El saludo dura dos segundos y no se comparte con el globo. Pero lo que
+    // el globo tenía para decir no se tira: el proceso principal sólo manda un
+    // estado cuando cambia, así que descartarlo sería perderlo hasta el
+    // siguiente cambio — justo el aviso de «te espera», que es el que importa.
+    if (greeting) { pending = { title: title, parts: parts, ms: ms }; return; }
     bTitle.textContent = title;
     bMeta.textContent = '';
     (parts || []).forEach(function (part) {
@@ -199,6 +207,7 @@
   }
 
   function hush() {
+    pending = null;
     clearTimeout(bubbleTimer);
     bubble.classList.remove('show');
   }
@@ -222,6 +231,55 @@
     return Math.floor(m / 60) + ' h ' + (m % 60) + ' min';
   }
 
+  /* ---------- el saludo ---------- */
+
+  // «Hi!» cuando aparece y «Bye!» antes de irse. El texto, la pose y los dos
+  // segundos salen de core/greeting.js, que es lo mismo que mira el proceso
+  // principal para saber cuánto esperar antes de cerrar la app.
+  var G = window.PetGreeting;
+  var greeting = null;        // el saludo en curso, o null
+  var greetTimer = 0;
+  var pending = null;         // lo que el globo quiso decir mientras saludaba
+
+  // A qué pose corresponde cada fase. Mientras saluda, esto es justo lo que se
+  // ignora — y a lo que se vuelve cuando el saludo termina.
+  function poseFor(p) {
+    return (p === 'working' || p === 'waiting' || p === 'sleeping') ? p : 'idle';
+  }
+
+  // Todo lo que cambia la pose pasa por acá: durante el saludo el estado se
+  // sigue anotando en `phase`, pero el dibujo no se toca. Si no, el primer
+  // `state` que llega del proceso principal le borra el saludo por arriba.
+  function pose(s) {
+    if (greeting || !avatar) return;
+    avatar.setState(s);
+  }
+
+  function greet(g) {
+    hush();                    // el saludo no comparte el aire con el globo
+    greeting = g;
+    greetEl.textContent = g.text;
+    greetEl.classList.remove('show');
+    void greetEl.offsetWidth;  // reinicia la animación si ya estaba puesta
+    greetEl.classList.add('show');
+    if (avatar) avatar.setState(g.state);
+
+    clearTimeout(greetTimer);
+    greetTimer = setTimeout(function () {
+      greeting = null;
+      greetEl.classList.remove('show');
+      // Al despedirse no se vuelve a ninguna pose ni se destapa nada: lo que
+      // sigue es cerrarse.
+      if (g === G.GOODBYE) return;
+      pose(poseFor(phase));
+      if (pending) { var p = pending; pending = null; say(p.title, p.parts, p.ms); }
+    }, G.MS);
+  }
+
+  // El proceso principal avisa que se va y espera: sin ese aviso el «Bye!» no
+  // llegaría a verse nunca, porque la app se cierra antes.
+  window.pet.onFarewell(function () { greet(G.GOODBYE); });
+
   /* ---------- estados ---------- */
 
   var phase = 'idle';
@@ -235,6 +293,8 @@
     conf.device = c.device;
     applySide(c.side);
     mountAvatar();
+    // Recién acá: antes de montar no hay a quién ponerle la pose.
+    greet(G.HELLO);
   });
 
   // De qué lado van los controles lo decide el proceso principal, que sabe
@@ -258,7 +318,7 @@
     bubble.classList.remove('insist');
 
     if (s.phase === 'sleeping') {
-      avatar.setState('sleeping');
+      pose('sleeping');
       // Sólo se afirma la hora si de verdad la sabemos. Sin statusline el pet
       // se entera de que no hay tokens pero no de cuándo vuelven, y ahí decir
       // "vuelve a las tantas" sería inventar.
@@ -273,10 +333,10 @@
       return;
     }
 
-    avatar.setState('idle');
+    pose('idle');
 
     if (s.phase === 'waiting') {
-      avatar.setState('waiting');
+      pose('waiting');
       // el mensaje del hook dice QUÉ pide; sin él sólo podríamos decir "te espera"
       say(
         s.message || 'Necesita que le contestes.',
@@ -287,7 +347,7 @@
       // frenado hasta que contestes, y eso no deja de ser cierto por esperar
       if (s.insist) bubble.classList.add('insist');
     } else if (s.phase === 'done') {
-      avatar.poke();
+      if (!greeting) avatar.poke();   // el saludo tiene su propia animación
       var parts = s.project ? [{ text: s.project, strong: true }]
                             : [{ text: 'claude code' }];
       if (s.took) parts.push({ text: ' · ' + human(s.took) });
@@ -304,7 +364,7 @@
     if (now < swapAt) return;
     swap = swap ? 0 : 1;
     swapAt = now + (swap ? 2000 + Math.random() * 2000 : 4000 + Math.random() * 5000);
-    avatar.setState(swap ? 'thinking' : 'working');
+    pose(swap ? 'thinking' : 'working');
   }, 250);
 
   /* ---------- el cursor de todo el escritorio ---------- */
@@ -349,5 +409,5 @@
   bubble.addEventListener('click', hush);
 
   // por si 'conf' no llegara (arranque raro): montar igual el primero del registro
-  setTimeout(function () { if (!avatar) mountAvatar(); }, 600);
+  setTimeout(function () { if (!avatar) { mountAvatar(); greet(G.HELLO); } }, 600);
 })();

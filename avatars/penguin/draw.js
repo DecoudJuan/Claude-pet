@@ -113,6 +113,35 @@
     '  18%  { opacity: 1; }',
     '  100% { opacity: 0; transform: translate(var(--pm-nx, -10px), -52px) scale(1.1) rotate(-14deg); }',
     '}',
+    // --- entrar y salir ---
+    // Sube desde abajo del cuadro, como si asomara por detrás de la barra de
+    // tareas, y se queda quieta arriba mientras dura el saludo. Al irse es el
+    // camino inverso. Derecho, sin balanceo: entra y sale una vez por sesión,
+    // y un personaje que se tambalea al aparecer se lee como un tropiezo, no
+    // como un saludo — el saludo lo dice el globo.
+    //
+    // Se queda abajo al final (`forwards`) porque después de esto la ventana
+    // se cierra: si volviera al centro, el último cuadro sería la mascota otra vez
+    // entera, justo lo que se acaba de despedir.
+    '@keyframes pm-hello {',
+    '  0%   { opacity: 0; transform: translateY(150px); }',
+    '  55%  { opacity: 1; }',
+    '  100% { opacity: 1; transform: translateY(0); }',
+    '}',
+    '@keyframes pm-bye {',
+    '  0%   { opacity: 1; transform: translateY(0); }',
+    '  62%  { opacity: 1; transform: translateY(0); }',
+    '  100% { opacity: 0; transform: translateY(150px); }',
+    '}',
+    // Las curvas son las de algo que entra frenando y sale acelerando, sin
+    // rebote: `ease-out` para asomar, `ease-in` para hundirse.
+    '.pm.is-greeting .pm-all { animation: pm-hello .62s cubic-bezier(.22, .68, .3, 1) both; }',
+    '.pm.is-farewell .pm-all { animation: pm-bye 2s cubic-bezier(.5, 0, .9, .35) forwards; }',
+    // Sin movimiento no se entra ni se sale volando, pero el saludo sigue
+    // existiendo: lo dice el cartel del pet, y acá sólo se está quieto.
+    '@media (prefers-reduced-motion: reduce) {',
+    '  .pm.is-greeting .pm-all, .pm.is-farewell .pm-all { animation: none; }',
+    '}',
     '.pm.is-poked .pm-all  { animation: pm-squash .62s cubic-bezier(.34, 1.36, .5, 1); }',
     '.pm.is-poked .pm-note { animation: pm-float .95s ease-out; }',
     '.pm.is-poked .pm-note-b { animation-delay: .1s; }',
@@ -343,6 +372,12 @@
         // no sigue el cursor: está durmiendo, no distraído
         tx = 0.06;
         ty = 0.55;
+      } else if (state === 'greeting' || state === 'farewell') {
+        // saludando te mira a vos, no a la pantalla: un saludo al vacío no es
+        // un saludo. Quieta, de frente — nada de barrer la mirada de un lado a
+        // otro, que es justo lo que haría parecer que se tambalea.
+        tx = 0;
+        ty = -0.12;
       } else if (state === 'waiting') {
         // te busca a vos y se queda ahí: si derivara parecería distraído, y es
         // justo el estado en el que necesita que lo mires
@@ -414,15 +449,18 @@
     return {
       element: svg,
       poke: poke,
-      // 'idle' | 'working' | 'thinking' | 'waiting' | 'sleeping'. working
-      // teclea, thinking mira al techo, waiting suelta el teclado y te busca a
-      // vos, sleeping cierra los ojos y deja de seguir el cursor.
+      // 'idle' | 'working' | 'thinking' | 'waiting' | 'sleeping' |
+      // 'greeting' | 'farewell'. working teclea, thinking mira al techo,
+      // waiting suelta el teclado y te busca a vos, sleeping cierra los ojos y
+      // deja de seguir el cursor, greeting entra subiendo y farewell se hunde.
       setState: function (next) {
         state = next || 'idle';
         svg.classList.toggle('is-working', state === 'working');
         svg.classList.toggle('is-thinking', state === 'thinking');
         svg.classList.toggle('is-waiting', state === 'waiting');
         svg.classList.toggle('is-sleeping', state === 'sleeping');
+        svg.classList.toggle('is-greeting', state === 'greeting');
+        svg.classList.toggle('is-farewell', state === 'farewell');
       },
       getState: function () { return state; },
       // coordenadas del cursor relativas a la ventana, para pointer: 'manual'

@@ -17,6 +17,20 @@ un módulo aparte: cualquiera puede escribir el suyo y elegirlo desde el panel.
 
 </div>
 
+## 🐧 Mandá un PR con tu propia mascota
+
+El pingüino y la nutria son los dos primeros, no los dos únicos. **Si dibujaste
+una y anda, mandala**: es una carpeta en `avatars/`, dos `<script>` en
+`app/window.html` y nada más — el pet no menciona a ninguna por nombre, las
+encuentra en un registro, así que no hay que tocarlo.
+
+Y no empezás de cero: el repo trae una skill que le explica a Claude Code el
+contrato, qué tiene que comunicar cada estado y qué errores de dibujo rompen la
+ventana.
+
+**→ [Cómo crear un avatar](AVATARS.md)** · [abrir un
+PR](https://github.com/DecoudJuan/Claude-pet/compare)
+
 ## El problema
 
 Le mandás un prompt a Claude Code y te vas a otra ventana. Cinco minutos
@@ -46,6 +60,9 @@ una esquina del escritorio y te lo dice sin que la mires.
 - **Se duerme cuando te quedás sin tokens.** Cierra los ojos, guarda la
   notebook y avisa a qué hora vuelve. Es el caso donde más molestaba lo
   contrario: seguir tecleando delante de una terminal que no puede avanzar.
+- **Saluda al llegar y se despide al irse.** Asoma desde abajo con un «Hi!» y,
+  antes de cerrarse, dice «Bye!» y se hunde por donde vino. Dos segundos cada
+  uno: el pet aparece y desaparece solo, y así se nota que fue él.
 - **Se deja tocar.** Un click y salta.
 - **Se elige todo desde el panel**: el avatar, su paleta, la notebook sobre la
   que trabaja y el tamaño.
@@ -265,7 +282,9 @@ nutria son los que vienen incluidos, no los únicos: en el código del pet no
 aparece ninguno por nombre, los encuentra en un registro.
 
 Sumar uno es un archivo que se registra y cuatro métodos que cumplir
-(`setState`, `look`, `poke`, `destroy`). El panel se llena solo.
+(`setState`, `look`, `poke`, `destroy`). El panel se llena solo. Los estados
+que recibe son siete: los cinco de la sesión —`idle`, `working`, `thinking`,
+`waiting`, `sleeping`— más la entrada y la salida, `greeting` y `farewell`.
 
 La **notebook** es un objeto aparte, no un adorno del avatar: **se dibuja
 sola**. El avatar deja un hueco y el device se pinta adentro — tapa, logo y
@@ -296,7 +315,10 @@ Claude-pet/
 │   ├── body.js           El cuerpo canónico: el torso que usan todos los
 │   │                     avatares y los anclajes de la notebook y las manos.
 │   ├── avatars.js        El registro de avatares.
-│   └── devices.js        El registro de notebooks, y la silueta que dibujan.
+│   ├── devices.js        El registro de notebooks, y la silueta que dibujan.
+│   └── greeting.js       El saludo: «Hi!», «Bye!» y cuánto duran. Lo miran la
+│                         ventana, cada avatar y el proceso principal, que tiene
+│                         que esperar a que el adiós se vea antes de cerrar.
 │
 ├── avatars/              Los personajes. Una carpeta por avatar.
 │   ├── penguin/

@@ -1,6 +1,6 @@
 ---
 name: avatar-designer
-description: Diseñar e implementar un avatar nuevo para Claude Pet — la mascota de escritorio que refleja el estado de Claude Code. Un avatar puede ser cualquier cosa que se dibuje — un animal, un objeto, un robot, una persona, un personaje inventado. Usala siempre que alguien quiera crear, diseñar, agregar o cambiar el personaje del pet, sin importar qué personaje sea — "creá un avatar", "hacé una mascota nueva", "quiero un <lo que sea> para el pet", "add an avatar", "diseñá un personaje para claude-pet" — y también cuando haya que dibujar o ajustar los estados (idle, working, thinking, waiting) o la notebook de un avatar que ya existe. Cubre el contrato que tiene que cumplir, qué debe comunicar cada estado, cómo se registra y qué errores de dibujo rompen la ventana.
+description: Diseñar e implementar un avatar nuevo para Claude Pet — la mascota de escritorio que refleja el estado de Claude Code. Un avatar puede ser cualquier cosa que se dibuje — un animal, un objeto, un robot, una persona, un personaje inventado. Usala siempre que alguien quiera crear, diseñar, agregar o cambiar el personaje del pet, sin importar qué personaje sea — "creá un avatar", "hacé una mascota nueva", "quiero un <lo que sea> para el pet", "add an avatar", "diseñá un personaje para claude-pet" — y también cuando haya que dibujar o ajustar los estados (idle, working, thinking, waiting, sleeping, y la entrada y la salida: greeting y farewell) o la notebook de un avatar que ya existe. Cubre el contrato que tiene que cumplir, qué debe comunicar cada estado, cómo se registra y qué errores de dibujo rompen la ventana.
 ---
 
 # Diseñar un avatar para Claude Pet
@@ -11,7 +11,7 @@ un avatar. Vos escribís el avatar.
 
 **Puede ser cualquier cosa.** Un animal, un robot, una taza de café, un
 personaje inventado. El pet no sabe ni le importa qué dibujaste: lo único que
-le pide es que cumpla el contrato y que los cinco estados se distingan.
+le pide es que cumpla el contrato y que los estados se distingan.
 
 Leé `AVATARS.md` del repo para el contrato completo. Esta skill es el criterio
 de diseño: qué tiene que *comunicar* cada estado, no sólo qué métodos exponer.
@@ -20,7 +20,9 @@ de diseño: qué tiene que *comunicar* cada estado, no sólo qué métodos expon
 
 Un avatar que no diferencia los estados no sirve para nada — el pet existe
 para que no tengas que mirar la terminal. Estos cinco **tienen que
-distinguirse de un vistazo, de reojo, a 150 px**.
+distinguirse de un vistazo, de reojo, a 150 px**. Aparte de los cinco están la
+entrada y la salida, que no son estados en los que se queda: son los dos
+segundos con los que llega y se va.
 
 ### `idle` — no hay nada corriendo
 
@@ -78,7 +80,8 @@ window.PetAvatars.register({
   mount: function (host, opts) {
     // opts: { palette, device, pointer: 'manual', interactive: false, label }
     return {
-      setState: function (s) { /* idle | working | thinking | waiting | sleeping */ },
+      // idle | working | thinking | waiting | sleeping | greeting | farewell
+      setState: function (s) { },
       look:     function (x, y) { /* cursor relativo a la ventana */ },
       poke:     function () { /* lo tocaron, o terminó un turno */ },
       destroy:  function () { /* soltar timers, listeners y rAF */ },
@@ -119,6 +122,38 @@ que vuelve.
 > El error a evitar: que se parezca a `idle`. En `idle` puede trabajar y no hay
 > nada pendiente; en `sleeping` no puede, y eso cambia lo que vos hacés
 > después.
+
+### `greeting` y `farewell` — llega y se va
+
+El pet aparece cuando arranca una sesión de Claude Code y se va cuando se apaga
+la última. Antes las dos cosas pasaban de golpe: la ventana estaba o no estaba.
+Ahora hay una entrada y una salida, y **son de todos los avatares**.
+
+- **`greeting`** llega una sola vez, apenas se monta el avatar: el dibujo asoma
+  desde abajo del cuadro, como si subiera desde atrás de la barra de tareas, y
+  se queda quieto mirando al frente.
+- **`farewell`** llega una sola vez, justo antes de que la app se cierre: se
+  hunde por el mismo camino **y se queda abajo**.
+
+El «Hi!» y el «Bye!» no los dibujás vos: los dice el pet, en su globo. Vos
+ponés el cuerpo — y nada más que eso, porque el texto ya está dicho.
+
+Los dos duran `window.PetGreeting.MS` (`core/greeting.js`). No inventes otro
+número: el proceso principal usa ese mismo para saber cuánto esperar antes de
+cerrar la app, y si tu salida dura más, se corta a la mitad.
+
+> El error a evitar, y son dos:
+>
+> **Que se tambalee.** Entrar y salir es subir y bajar derecho — sin vaivenes
+> ni rebote. Se ve una vez por sesión, y un personaje que se bambolea al
+> aparecer se lee como un tropiezo, no como un saludo.
+>
+> **Que el `farewell` vuelva al centro.** El último cuadro es el que queda, y
+> la app se cierra justo ahí: si la animación termina con el personaje entero,
+> se despidió y no se fue.
+
+También conviene guardar la computadora en los dos: entrando todavía no empezó
+a laburar, y saliendo ya terminó.
 
 ## Dos reglas estructurales que no se negocian
 
@@ -226,7 +261,8 @@ pingüino de 56 % de un núcleo a 13 %:
 ## Por dónde empezar
 
 `AVATARS.md` tiene **un esqueleto completo y mínimo** — torso canónico, hueco
-para la máquina, los cinco estados — listo para copiar y cambiarle la cabeza.
+para la máquina, los cinco estados y la entrada y la salida — listo para
+copiar y cambiarle la cabeza.
 Empezá por ahí y no por el pingüino: el pingüino tiene setecientas líneas de
 dibujo y es fácil arrastrar cosas que son suyas y no del sistema.
 
@@ -251,6 +287,9 @@ donde `payload.json` es `{"session_id":"test","cwd":"/ruta/al/proyecto"}`.
 - [ ] `waiting` no se parece a `idle`.
 - [ ] `thinking` no parece que terminó.
 - [ ] `sleeping` no se parece a `idle`.
+- [ ] Entra subiendo y sale hundiéndose, derecho y sin rebote.
+- [ ] El `farewell` termina abajo, no de vuelta en el centro.
+- [ ] La entrada y la salida duran `PetGreeting.MS`, no un número propio.
 - [ ] Nada se mueve en loop perfectamente regular.
 - [ ] `destroy()` suelta el `requestAnimationFrame` y todos los timers.
 - [ ] Las zonas vacías dejan pasar el mouse.

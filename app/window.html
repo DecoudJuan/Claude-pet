@@ -54,7 +54,10 @@
 
   /* ---------- globo de diálogo ---------- */
 
-  #bubble {
+  /* La piel del globo. La comparten el globo de diálogo y el saludo: son dos
+     cosas distintas —uno cuenta qué pasa en Claude Code, el otro sólo saluda—
+     pero las dos son la mascota hablando, y eso se dibuja de una sola forma. */
+  #bubble, #greet {
     position: absolute;
     /* se ajusta al texto en vez de medir siempre lo mismo que el panel: con un
        aviso corto quedaba medio globo vacío */
@@ -62,22 +65,25 @@
     right: 0;
     margin-inline: auto;
     width: fit-content;
-    min-width: 136px;
     max-width: var(--panel-w);
-    bottom: calc(var(--avatar) + 10px);
     background: var(--bg);
     color: var(--ink);
     border: 2px solid var(--ink);
     border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(10, 14, 20, .28);
+    transform-origin: 50% 100%;
+    pointer-events: none;
+  }
+
+  #bubble {
+    min-width: 136px;
+    bottom: calc(var(--avatar) + 10px);
     padding: 9px 11px 10px;
     font-size: 12.5px;
     line-height: 1.35;
-    box-shadow: 0 6px 18px rgba(10, 14, 20, .28);
     opacity: 0;
     transform: translateY(6px) scale(.94);
-    transform-origin: 50% 100%;
     transition: opacity .18s ease, transform .18s cubic-bezier(.34, 1.4, .5, 1);
-    pointer-events: none;
   }
   #bubble.show { opacity: 1; transform: none; pointer-events: auto; }
 
@@ -91,8 +97,8 @@
   #bubble.show.insist { animation: bubble-insist 3.4s ease-in-out infinite; }
 
   /* la colita, en dos triángulos para que conserve el borde negro */
-  #bubble::before,
-  #bubble::after {
+  #bubble::before, #bubble::after,
+  #greet::before, #greet::after {
     content: "";
     position: absolute;
     left: calc(50% - 28px);
@@ -100,16 +106,19 @@
     height: 0;
     border-style: solid;
   }
-  #bubble::before {
+  #bubble::before, #greet::before {
     bottom: -18px;
     border-width: 18px 14px 0 0;
     border-color: var(--ink) transparent transparent transparent;
   }
-  #bubble::after {
+  #bubble::after, #greet::after {
     bottom: -13px;
     border-width: 14px 10px 0 0;
     border-color: var(--bg) transparent transparent transparent;
   }
+  /* «Hi!» es angosto: con el desplazamiento del globo grande la colita le
+     quedaría colgando del borde. Centrada. */
+  #greet::before, #greet::after { left: calc(50% - 7px); }
 
   #bubble .title { font-weight: 600; letter-spacing: -.01em; overflow-wrap: anywhere; }
   #bubble .meta {
@@ -122,6 +131,43 @@
     white-space: nowrap;
   }
   #bubble .meta b { color: var(--accent); font-weight: 500; }
+
+  /* ---------- el saludo ---------- */
+
+  /* «Hi!» al entrar y «Bye!» antes de irse. Es el mismo globo — la mascota
+     hablando —, con la letra más grande porque no tiene nada más que decir, y
+     entrando de abajo hacia arriba: el mismo impulso con el que asoma sobre la
+     barra de tareas. Es un globo aparte y no el de siempre porque tiene su
+     propia vida: entra, se queda dos segundos y se va, sin depender de que
+     cambie ningún estado. */
+  #greet {
+    /* En el mismo lugar que el globo: dónde termina el dibujo es cosa del
+       avatar —un sombrero o unas orejas llegan casi al borde del cuadro—, así
+       que el saludo se cuelga del punto que ya está reservado para hablar. */
+    bottom: calc(var(--avatar) + 10px);
+    z-index: 3;
+    padding: 7px 14px 8px;
+    font: 700 16px/1.1 var(--sans);
+    letter-spacing: -.01em;
+    opacity: 0;
+  }
+  /* Un solo ciclo para los dos segundos enteros: entra subiendo, se queda
+     quieto, y se va siguiendo para arriba en vez de apagarse en el lugar. Sin
+     rebote: sube y frena, como el avatar. */
+  @keyframes greet-rise {
+    0%        { opacity: 0; transform: translateY(20px) scale(.92); }
+    22%, 78%  { opacity: 1; transform: translateY(0) scale(1); }
+    100%      { opacity: 0; transform: translateY(-16px) scale(.97); }
+  }
+  #greet.show { animation: greet-rise 2s cubic-bezier(.22, .68, .3, 1) both; }
+
+  /* Sin movimiento el saludo sigue siendo el saludo: aparece y se va. */
+  @media (prefers-reduced-motion: reduce) {
+    @keyframes greet-rise {
+      0%, 100% { opacity: 0; }
+      12%, 82% { opacity: 1; }
+    }
+  }
 
   /* ---------- el avatar ---------- */
 
@@ -275,6 +321,8 @@
     <div class="meta"></div>
   </div>
 
+  <div id="greet" role="status" aria-live="polite"></div>
+
   <div id="panel" hidden>
     <div class="fld">
       <span>Tamaño</span>
@@ -314,6 +362,7 @@
 <script src="../core/body.js"></script>
 <script src="../core/avatars.js"></script>
 <script src="../core/devices.js"></script>
+<script src="../core/greeting.js"></script>
 <!-- catálogo: personajes y máquinas -->
 <script src="../avatars/penguin/draw.js"></script>
 <script src="../avatars/penguin/avatar.js"></script>

@@ -13,6 +13,7 @@ const fs = require('fs');
 const os = require('os');
 const quota = require('./quota');
 const turn = require('./turn');
+const greeting = require('../core/greeting');
 
 // El panel de ajustes mide siempre lo mismo, así que la ventana no puede ser
 // más angosta que él: cambiar de tamaño mueve el alto y el avatar, nunca el
@@ -255,7 +256,30 @@ function maybeQuit(count) {
   if (now - emptySince < QUIT_AFTER_MS) return;
   if (now - bootAt < BOOT_GRACE_MS) return;
   if (now < doneUntil) return;
-  app.quit();
+  farewell();
+}
+
+/* ---------- irse avisando ---------- */
+
+// El pet no se cierra de golpe: avisa. La ventana muestra el «Bye!» y hay que
+// darle el tiempo de que se vea — cerrar la app en el mismo tick sería mostrar
+// una despedida que nadie llega a leer.
+//
+// Los 220 ms de más no son magia: es el viaje del mensaje por IPC más el
+// cuadro en el que la animación arranca. Sin ese margen el adiós se corta
+// justo al final, que es cuando el cartel se va subiendo.
+const BYE_MS = greeting.MS + 220;
+let leaving = false;
+
+// Toda salida voluntaria pasa por acá: la X del hover, «Salir» del menú y el
+// apagado solo cuando se fue la última sesión. app.quit() directo sigue
+// existiendo para lo que no es voluntario — que no haya ventana, por ejemplo.
+function farewell() {
+  if (leaving) return;
+  leaving = true;
+  if (!win || win.isDestroyed()) { app.quit(); return; }
+  win.webContents.send('farewell');
+  setTimeout(function () { app.quit(); }, BYE_MS);
 }
 
 /* ---------- ventana ---------- */
@@ -424,7 +448,7 @@ ipcMain.on('set-avatar', function (_e, pick) {
 // La X del hover: cerrar a mano lo silencia hasta la próxima sesión.
 ipcMain.on('close-pet', function () {
   try { fs.writeFileSync(MUTED, String(Date.now())); } catch (e) { /* peor caso: vuelve */ }
-  app.quit();
+  farewell();
 });
 
 // Instalada desde un .exe, nadie sabe dónde quedó hook.js. En vez de hacerte
@@ -509,7 +533,7 @@ ipcMain.on('menu', function () {
       label: 'Salir (vuelve en la próxima sesión)',
       click: function () {
         try { fs.writeFileSync(MUTED, String(Date.now())); } catch (e) { /* peor caso: vuelve */ }
-        app.quit();
+        farewell();
       }
     }
   ]).popup({ window: win });

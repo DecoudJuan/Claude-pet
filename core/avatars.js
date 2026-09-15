@@ -20,10 +20,16 @@
  * mount() tiene que devolver un handle con este contrato — es todo lo que el
  * pet le pide, y lo único que hay que respetar para que un avatar nuevo ande:
  *
- *   setState(estado)      'idle' | 'working' | 'thinking'
+ *   setState(estado)      'idle' | 'working' | 'thinking' | 'waiting' |
+ *                         'sleeping' | 'greeting' | 'farewell'
  *   look(x, y)            cursor relativo a la ventana (la pantalla entera)
  *   poke()                reacción al click
  *   destroy()             soltar timers, listeners y rAF
+ *
+ * 'greeting' y 'farewell' son la entrada y la salida: el pet los manda una vez
+ * cada uno, al aparecer y justo antes de cerrarse, y duran lo que dice
+ * core/greeting.js. El avatar asoma desde abajo del cuadro y se hunde por el
+ * mismo camino; el «Hi!» y el «Bye!» los dice el pet, en su globo.
  *
  * Opcionales: setPalette(id) y element (el nodo, para tests).
  */
