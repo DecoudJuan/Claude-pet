@@ -77,8 +77,9 @@ window.PetAvatars.register({
   id: 'zorro',
   name: 'Zorro',
   palettes: [{ id: 'colour', name: 'Colour' }],
+  accessories: [{ id: 'none', name: 'None' }], // opcional
   mount: function (host, opts) {
-    // opts: { palette, device, pointer: 'manual', interactive: false, label }
+    // opts: { palette, accessory, device, pointer: 'manual', interactive: false, label }
     return {
       // idle | working | thinking | waiting | sleeping | greeting | farewell
       setState: function (s) { },
@@ -87,6 +88,7 @@ window.PetAvatars.register({
       destroy:  function () { /* soltar timers, listeners y rAF */ },
 
       setPalette: function (id) {},   // opcional
+      setAccessory: function (id) {}, // opcional
       setDevice:  function (dev) {}   // opcional, ver abajo
     };
   }

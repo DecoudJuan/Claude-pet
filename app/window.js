@@ -19,8 +19,10 @@
   var chromeEl = document.getElementById('chrome');
   var selAv   = document.getElementById('sel-avatar');
   var selPal  = document.getElementById('sel-palette');
+  var selAcc  = document.getElementById('sel-accessory');
   var selDev  = document.getElementById('sel-device');
   var fldPal  = document.getElementById('fld-palette');
+  var fldAcc  = document.getElementById('fld-accessory');
   var bTitle  = bubble.querySelector('.title');
   var bMeta   = bubble.querySelector('.meta');
 
@@ -30,7 +32,7 @@
     { id: 'l', name: 'Grande' }
   ];
 
-  var conf = { size: 'm', avatar: null, palette: null, device: null };
+  var conf = { size: 'm', avatar: null, palette: null, accessory: null, device: null };
 
   // El ancho de la ventana ya no dice de qué tamaño es (es fijo, para que el
   // panel no cambie), así que el tamaño del avatar sale del atributo.
@@ -52,11 +54,14 @@
 
     var ok = def.palettes.some(function (p) { return p.id === conf.palette; });
     if (!ok) conf.palette = def.palettes.length ? def.palettes[0].id : null;
+    var accessoryOk = def.accessories.some(function (a) { return a.id === conf.accessory; });
+    if (!accessoryOk) conf.accessory = def.accessories.length ? def.accessories[0].id : null;
 
     avatar = def.mount(host, {
       pointer: 'manual',
       interactive: false,
       palette: conf.palette,
+      accessory: conf.accessory,
       device: window.PetDevices.get(conf.device),
       label: def.name + ' de Claude Code'
     });
@@ -101,6 +106,10 @@
     fldPal.hidden = pals.length < 2;
     if (!fldPal.hidden) fillSelect(selPal, pals, conf.palette);
 
+    var accessories = current ? current.accessories : [];
+    fldAcc.hidden = accessories.length < 2;
+    if (!fldAcc.hidden) fillSelect(selAcc, accessories, conf.accessory);
+
     var dev = window.PetDevices.get(conf.device);
     fillSelect(selDev, window.PetDevices.list(), dev && dev.id);
   }
@@ -108,8 +117,9 @@
   selAv.addEventListener('change', function () {
     conf.avatar = selAv.value;
     conf.palette = null;
+    conf.accessory = null;
     mountAvatar();
-    window.pet.setAvatar({ avatar: conf.avatar, palette: conf.palette });
+    persistAvatar();
     renderPanel();
   });
 
@@ -117,7 +127,14 @@
     conf.palette = selPal.value;
     if (avatar && avatar.setPalette) avatar.setPalette(conf.palette);
     else mountAvatar();
-    window.pet.setAvatar({ avatar: current && current.id, palette: conf.palette });
+    persistAvatar();
+  });
+
+  selAcc.addEventListener('change', function () {
+    conf.accessory = selAcc.value;
+    if (avatar && avatar.setAccessory) avatar.setAccessory(conf.accessory);
+    else mountAvatar();
+    persistAvatar();
   });
 
   selDev.addEventListener('change', function () {
@@ -125,8 +142,17 @@
     var dev = window.PetDevices.get(conf.device);
     if (avatar && avatar.setDevice) avatar.setDevice(dev);
     else mountAvatar();
-    window.pet.setAvatar({ avatar: current && current.id, palette: conf.palette, device: conf.device });
+    persistAvatar();
   });
+
+  function persistAvatar() {
+    window.pet.setAvatar({
+      avatar: current && current.id,
+      palette: conf.palette,
+      accessory: conf.accessory,
+      device: conf.device
+    });
+  }
 
   function togglePanel(open) {
     var next = open === undefined ? panel.hidden : open;
@@ -290,6 +316,7 @@
     applySize(c.size || "m");
     conf.avatar = c.avatar;
     conf.palette = c.palette;
+    conf.accessory = c.accessory;
     conf.device = c.device;
     applySide(c.side);
     mountAvatar();
