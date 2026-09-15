@@ -29,7 +29,7 @@
   var order = [];
   var byId = {};
 
-  var BADGES = ['glow', 'bar', 'ring', 'none'];
+  var BADGES = ['glow', 'bar', 'ring', 'apple', 'none'];
 
   function register(def) {
     if (!def || !def.id) throw new Error('PetDevices.register: falta id');
@@ -68,6 +68,22 @@
       case 'glow': return '<circle class="pd-badge" cx="' + cx + '" cy="' + cy + '" r="8"/>';
       case 'bar':  return '<rect class="pd-badge" x="' + (cx - 12) + '" y="' + (cy - 3) + '" width="24" height="6" rx="3"/>';
       case 'ring': return '<circle class="pd-badge-ring" cx="' + cx + '" cy="' + cy + '" r="8"/>';
+      case 'apple':
+        return '<g class="pd-apple" transform="translate(' + cx + ' ' + cy + ') scale(.9) translate(' + (-cx) + ' ' + (-cy) + ')">' +
+          '<path class="pd-badge" d="M' + cx + ' ' + (cy - 7) +
+          ' C' + (cx - 4) + ' ' + (cy - 7) + ' ' + (cx - 6) + ' ' + (cy - 10) + ' ' + (cx - 10) + ' ' + (cy - 9) +
+          ' C' + (cx - 16) + ' ' + (cy - 8) + ' ' + (cx - 19) + ' ' + (cy - 3) + ' ' + (cx - 18) + ' ' + (cy + 3) +
+          ' C' + (cx - 17) + ' ' + (cy + 9) + ' ' + (cx - 12) + ' ' + (cy + 16) + ' ' + (cx - 7) + ' ' + (cy + 16) +
+          ' C' + (cx - 4) + ' ' + (cy + 16) + ' ' + (cx - 2) + ' ' + (cy + 14) + ' ' + (cx + 1) + ' ' + (cy + 14) +
+          ' C' + (cx + 4) + ' ' + (cy + 14) + ' ' + (cx + 6) + ' ' + (cy + 17) + ' ' + (cx + 10) + ' ' + (cy + 15) +
+          ' C' + (cx + 14) + ' ' + (cy + 12) + ' ' + (cx + 18) + ' ' + (cy + 6) + ' ' + (cx + 19) + ' ' + (cy + 1) +
+          ' C' + (cx + 14) + ' ' + cy + ' ' + (cx + 11) + ' ' + (cy - 4) + ' ' + (cx + 12) + ' ' + (cy - 8) +
+          ' C' + (cx + 8) + ' ' + (cy - 10) + ' ' + (cx + 4) + ' ' + (cy - 9) + ' ' + cx + ' ' + (cy - 7) + ' Z"/>' +
+          '<path class="pd-badge" d="M' + (cx + 1) + ' ' + (cy - 12) +
+          ' C' + (cx + 2) + ' ' + (cy - 18) + ' ' + (cx + 7) + ' ' + (cy - 22) + ' ' + (cx + 13) + ' ' + (cy - 22) +
+          ' C' + (cx + 12) + ' ' + (cy - 16) + ' ' + (cx + 8) + ' ' + (cy - 12) + ' ' + (cx + 1) + ' ' + (cy - 12) + ' Z"/>' +
+          '<circle class="pd-apple-bite" cx="' + (cx + 16) + '" cy="' + (cy - 5) + '" r="5"/>' +
+          '</g>';
       default:     return '';
     }
   }
@@ -101,6 +117,7 @@
     el.textContent = [
       '.pd-lid        { fill: var(--pd-lid, #1f252d); stroke: var(--pd-edge, #000); stroke-width: 5; stroke-linejoin: round; }',
       '.pd-badge      { fill: var(--pd-badge, #d8dadd); }',
+      '.pd-apple-bite { fill: var(--pd-lid, #1f252d); }',
       '.pd-badge-ring { fill: none; stroke: var(--pd-badge, #d8dadd); stroke-width: 3; }'
     ].join('\n');
     doc.head.appendChild(el);

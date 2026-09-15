@@ -7,6 +7,7 @@
  */
 [
   { id: 'macbook',          name: 'MacBook',            lid: '#c9ccd1', badge: 'glow', badgeColor: '#8b9096' },
+  { id: 'macbook-space-gray', name: 'MacBook · Space Gray', lid: '#5f646b', badge: 'apple', badgeColor: '#d9dde1' },
   { id: 'macbook-midnight', name: 'MacBook · Midnight', lid: '#2b3442', badge: 'glow', badgeColor: '#c3ccd8' },
   { id: 'macbook-negra',    name: 'MacBook · Negra',    lid: '#16181b', badge: 'glow', badgeColor: '#9aa0a6' },
 

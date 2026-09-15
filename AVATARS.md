@@ -22,6 +22,10 @@ window.PetAvatars.register({
     { id: 'colour', name: 'Colour' },
     { id: 'noche',  name: 'Noche' }
   ],
+  accessories: [                  // opcional
+    { id: 'none', name: 'Ninguno' },
+    { id: 'glasses', name: 'Anteojos' }
+  ],
   mount: function (host, opts) {
     return MiZorro.mount(host, opts);
   }
@@ -33,6 +37,7 @@ window.PetAvatars.register({
 | Opción | |
 |---|---|
 | `palette` | El id de paleta elegido, o `null` si el avatar no declara ninguna. |
+| `accessory` | El id de accesorio elegido, o `null` si el avatar no declara ninguno. |
 | `device` | La notebook elegida — `{ id, name, lid, badge, badgeColor }` — o `null`. Ver abajo. |
 | `pointer` | Siempre `'manual'`. El avatar **no** debe escuchar el mouse por su cuenta: la posición se la inyecta el pet con `look()`, porque es la del cursor en toda la pantalla, no la de la ventana. |
 | `interactive` | Siempre `false`. El click y el arrastre los maneja el pet. |
@@ -52,6 +57,7 @@ Opcional:
 | | |
 |---|---|
 | `setPalette(id)` | Cambiar de tinta sin remontar. Si no está, el pet remonta el avatar entero. |
+| `setAccessory(id)` | Mostrar otra combinación de accesorios sin remontar. Si no está, el pet remonta. |
 | `setDevice(dev)` | Cambiar de notebook sin remontar. Si no está, el pet remonta. |
 | `element` | El nodo raíz, cómodo para tests. |
 
@@ -209,8 +215,9 @@ avatars/zorro/
 ```
 
 **3. Listo.** El panel de ajustes lee el registro solo: el selector de avatares
-se llena con todos los registrados y el de paletas con las del que esté
-elegido. Si el avatar declara menos de dos paletas, esa fila no se muestra.
+se llena con todos los registrados, el de paletas con las del que esté elegido
+y el de accesorios con sus opciones. Las filas con menos de dos alternativas
+no se muestran.
 
 No hay paso 4. No hay que tocar `main.js`, ni el panel, ni el CSS.
 

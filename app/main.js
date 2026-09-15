@@ -22,9 +22,9 @@ const greeting = require('../core/greeting');
 // taparlo: así los controles del costado nunca quedan sepultados. Lo que sobra
 // es transparente y, gracias al click-through, tampoco atrapa el mouse.
 const SIZES = {
-  s: { w: 240, h: 442 },
-  m: { w: 240, h: 472 },
-  l: { w: 288, h: 514 }
+  s: { w: 240, h: 476 },
+  m: { w: 240, h: 506 },
+  l: { w: 288, h: 548 }
 };
 const DEFAULT_SIZE = 'm';
 
@@ -374,6 +374,7 @@ function createWindow() {
       size: SIZES[c.size] ? c.size : DEFAULT_SIZE,
       avatar: c.avatar || null,
       palette: c.palette || null,
+      accessory: c.accessory || null,
       device: c.device || null,
       side: sideFor(win.getBounds())
     });
@@ -441,6 +442,7 @@ ipcMain.on('set-avatar', function (_e, pick) {
   writeConf({
     avatar: cleanId(pick && pick.avatar),
     palette: cleanId(pick && pick.palette),
+    accessory: cleanId(pick && pick.accessory),
     device: cleanId(pick && pick.device)
   });
 });
