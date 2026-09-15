@@ -41,7 +41,7 @@
     // Orejas de conejo, cuernos, una cola, una vincha: lo que sobresale del
     // cráneo puede llegar hasta acá y ni un píxel más. No es una preferencia
     // estética — afuera de esta caja el dibujo se sale del viewBox y el pet lo
-    // recorta. Los bigotes de la nutria usan x 19..222, bien adentro.
+    // recorta. Los auriculares del pingüino usan x 18..222, bien adentro.
     LIMITS: { top: 8, left: 8, right: 232, bottom: 240 },
 
     // De acá para abajo es igual en todos.

@@ -90,7 +90,7 @@ window.PetAvatars.register({
 });
 ```
 
-**Una carpeta por avatar**, con el mismo reparto que la nutria:
+**Una carpeta por avatar**, con el mismo reparto que el pingüino:
 
 ```
 avatars/<id>/
@@ -131,7 +131,7 @@ rompés, tu avatar anda solo pero rompe a los demás.
 mismo tamaño, mismos anclajes. Lo que cambia es de ahí para arriba: cabeza,
 cara, colores, accesorios.
 
-No pidas la geometría de memoria ni la copies de otro avatar: **pedila**.
+No pidas la geometría de memoria ni la copies del pingüino: **pedila**.
 
 ```js
 var B = window.PetBody;   // core/body.js, en la raíz

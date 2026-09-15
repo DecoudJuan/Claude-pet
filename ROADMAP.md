@@ -86,7 +86,7 @@ que se rompió.
 ### 8. El sistema de avatares
 
 - **Registro con contrato** (`setState` / `look` / `poke` / `destroy`). El pet
-  no menciona a la nutria por nombre en ningún lado.
+  no menciona a ningún avatar por nombre en ningún lado.
 - **El panel se llena solo** desde el registro: avatares y paletas.
 - Documentado en [AVATARS.md](AVATARS.md).
 
