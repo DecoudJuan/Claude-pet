@@ -1,14 +1,18 @@
 /*
- * turn.test.js — cuándo una sesión cuenta como que está laburando.
+ * turn.test.js — quién está esperándote y quién está laburando.
  *
- * Fija la regla que separa contestar un pedido de permiso de dejarlo ahí: un
- * aviso que vence NO prueba que hayas contestado, prueba que pasaron 40 s. Lo
- * que sí lo prueba es el transcript, porque contestar hace trabajo y el
- * trabajo se escribe.
+ * La regla que fija todo esto: un pedido de permiso deja de estar pendiente
+ * cuando lo contestás, y contestarlo se ve en el transcript, porque contestar
+ * hace trabajo y el trabajo se escribe. El tiempo no prueba nada — que pasen
+ * 40 s no quiere decir que hayas contestado.
  *
- * Replica el filtro de project() en app/main.js, que vive dentro del proceso
- * principal de Electron y no se puede importar suelto. Si allá cambia la
- * regla, este espejo tiene que cambiar con ella.
+ * De ahí salen las dos mitades: mientras no aparezca esa prueba el turno sigue
+ * frenado y el aviso se queda; cuando aparece, la sesión pasa a trabajar en el
+ * acto y sin esperar ningún vencimiento.
+ *
+ * Replica los selectores de project() en app/main.js, que vive dentro del
+ * proceso principal de Electron y no se puede importar suelto. Si allá cambia
+ * la regla, este espejo tiene que cambiar con ella.
  */
 'use strict';
 
@@ -21,44 +25,76 @@ const { check, done } = require('./check.js');
 const WAITING_TTL_MS = 40000;
 const WORKING_TTL_MS = 15 * 60 * 1000;
 
+function answered(s) { return turn.movedSince(s, s.updatedAt); }
+
+function waits(s, now) {
+  if (s.state !== 'waiting') return false;
+  if (!s.transcript) return now - (s.updatedAt || 0) < WAITING_TTL_MS;
+  return !answered(s);
+}
+
 function claims(s, now) {
   if (now - (s.updatedAt || 0) >= WORKING_TTL_MS) return false;
-  const answered = s.state === 'waiting' &&
-                   now - (s.updatedAt || 0) >= WAITING_TTL_MS &&
-                   turn.movedSince(s, s.updatedAt);
-  return (s.state === 'working' || answered) && turn.isActive(s, now);
+  return (s.state === 'working' ||
+          (s.state === 'waiting' && answered(s))) && turn.isActive(s, now);
 }
+
+function insists(s, now) { return now - (s.updatedAt || 0) < WAITING_TTL_MS; }
 
 const tmp = path.join(os.tmpdir(), 'pet-transcript-' + Date.now() + '.jsonl');
 fs.writeFileSync(tmp, JSON.stringify({ type: 'user' }) + '\n');
 
 const now = Date.now();
-const notifiedAt = now - 60000;        // el aviso llegó hace 60 s
 
 function touch(msAgo) {
   const t = new Date(now - msAgo);
   fs.utimesSync(tmp, t, t);
 }
 
-console.log('turn.js — quién está laburando');
+function aviso(msAgo, transcript) {
+  return {
+    state: 'waiting',
+    updatedAt: now - msAgo,
+    transcript: transcript === undefined ? tmp : transcript
+  };
+}
 
-touch(90000);                          // nada se escribió después del aviso
-check('aviso sin contestar -> no labura',
-      claims({ state: 'waiting', updatedAt: notifiedAt, transcript: tmp }, now), false);
+console.log('turn.js — esperando y laburando');
 
-touch(5000);                           // contestaste: el turno siguió
-check('aviso contestado -> labura',
-      claims({ state: 'waiting', updatedAt: notifiedAt, transcript: tmp }, now), true);
+/* ---------- el aviso se queda mientras el turno esté trabado ---------- */
 
-check('aviso fresco todavia no se promueve',
-      claims({ state: 'waiting', updatedAt: now - 5000, transcript: tmp }, now), false);
+// «Sin contestar» es que el transcript quedó ANTES del aviso, así que el toque
+// tiene que ser más viejo que el aviso de cada caso, no más viejo que el reloj.
+touch(90000);
+check('permiso sin contestar hace 1 min -> sigue avisando', waits(aviso(60000), now), true);
+
+touch(660000);
+check('permiso sin contestar hace 10 min -> sigue avisando', waits(aviso(600000), now), true);
+check('y mientras tanto no labura', claims(aviso(600000), now), false);
+
+check('cabecea al principio', insists(aviso(5000), now), true);
+check('a los 40 s deja de cabecear, pero el globo queda', insists(aviso(60000), now), false);
+
+/* ---------- contestarlo lo apaga, y en el acto ---------- */
+
+touch(5000);                                   // contestaste: el turno siguió
+check('permiso contestado -> deja de avisar', waits(aviso(60000), now), false);
+check('permiso contestado -> labura', claims(aviso(60000), now), true);
+// Antes esto pedía además que pasaran 40 s, y en el hueco la sesión no era ni
+// una cosa ni la otra: el pet cantaba un «Terminó» falso en medio del turno.
+check('contestado rapido -> labura ya, sin esperar los 40 s',
+      claims(aviso(10000), now), true);
+
+/* ---------- sin transcript no hay con qué desmentir el aviso ---------- */
+
+check('sin transcript, aviso fresco -> avisa', waits(aviso(5000, ''), now), true);
+check('sin transcript, aviso viejo -> se apaga igual', waits(aviso(600000, ''), now), false);
+check('sin transcript no se inventa trabajo', claims(aviso(600000, ''), now), false);
+
+/* ---------- trabajo de verdad ---------- */
 
 check('working de verdad sigue laburando',
       claims({ state: 'working', updatedAt: now - 5000, transcript: tmp }, now), true);
-
-check('sin transcript no se inventa trabajo',
-      claims({ state: 'waiting', updatedAt: notifiedAt, transcript: '' }, now), false);
-
 check('un turno mas viejo que el techo se descarta',
       claims({ state: 'working', updatedAt: now - WORKING_TTL_MS - 1, transcript: tmp }, now), false);
 

@@ -45,7 +45,9 @@ const APP_PATH = path.join(ROOT, 'app-path.json');
 const AUTO = process.argv.includes('--auto');
 const QUIT_AFTER_MS = 25000;   // gracia desde que se va la última sesión
 const BOOT_GRACE_MS = 30000;   // no cerrarse apenas arranca
-const WAITING_TTL_MS = 40000;  // cuánto dura el aviso de «te espera»
+// Cuánto cabecea el aviso de «te espera». El aviso en sí no vence — dura lo
+// que dure el turno frenado; esto es sólo hasta cuándo insiste.
+const WAITING_TTL_MS = 40000;
 // Si cancelás un turno con Ctrl+C puede no dispararse ningún hook, y la sesión
 // se quedaría en "working" para siempre: el avatar tecleando solo. Este techo
 // es la garantía de que eso no pasa. Generoso a propósito — un turno largo de
@@ -150,23 +152,29 @@ function project(sessions) {
   }
 
   // Cuando contestás un pedido de permiso no se dispara ningún hook hasta que
-  // termina el turno, así que el aviso se apagaría recién ahí. Vence solo: a
-  // los 40 s la sesión vuelve a contarse como trabajando, que es lo que pasó.
+  // termina el turno: el archivo sigue diciendo "waiting" mientras el trabajo
+  // ya se reanudó. Lo que separa haberlo contestado de haberlo dejado ahí es
+  // el transcript — contestar hace trabajo y el trabajo se escribe.
+  //
+  // Mientras no aparezca esa prueba, el turno sigue frenado y el pet lo sigue
+  // diciendo. No vence: un turno trabado es el caso que más caro sale, y
+  // callarse a los 40 s es callarse justo cuando te fuiste a hacer otra cosa.
+  function answered(s) {
+    return turn.movedSince(s, s.updatedAt);
+  }
   const waiting = sessions.find(function (s) {
-    return s.state === 'waiting' && now - (s.updatedAt || 0) < WAITING_TTL_MS;
+    if (s.state !== 'waiting') return false;
+    // Sin transcript no hay con qué desmentirlo, y un aviso que no se puede
+    // dar por contestado no se apagaría nunca. Ahí vale sólo la ventana corta.
+    if (!s.transcript) return now - (s.updatedAt || 0) < WAITING_TTL_MS;
+    return !answered(s);
   });
   const working = sessions.filter(function (s) {
     if (now - (s.updatedAt || 0) >= WORKING_TTL_MS) return false;
-    // Un aviso vencido no prueba que hayas contestado: prueba que pasaron 40 s.
-    // Si lo dejaste ahí, Claude Code está tan quieto como vos, y el pet no
-    // tiene por qué ponerse a teclear. Lo que sí distingue una cosa de la otra
-    // es el transcript: contestar hace trabajo y el trabajo se escribe.
-    const answered = s.state === 'waiting' &&
-                     now - (s.updatedAt || 0) >= WAITING_TTL_MS &&
-                     turn.movedSince(s, s.updatedAt);
     // Decir que trabaja no alcanza: si cortaste el turno con Ctrl+C ningún hook
     // lo avisa, así que se confirma contra el latido del transcript.
-    return (s.state === 'working' || answered) && turn.isActive(s, now);
+    return (s.state === 'working' ||
+            (s.state === 'waiting' && answered(s))) && turn.isActive(s, now);
   });
 
   if (waiting) {
@@ -176,7 +184,10 @@ function project(sessions) {
       phase: 'waiting',
       project: label(waiting),
       message: waiting.message || '',
-      tool: waiting.lastTool || ''
+      tool: waiting.lastTool || '',
+      // El aviso queda; lo que se calma es el cabeceo. Insistir para siempre
+      // deja de ser un aviso y pasa a ser ruido de fondo, que se ignora igual.
+      insist: now - (waiting.updatedAt || 0) < WAITING_TTL_MS
     };
   }
 

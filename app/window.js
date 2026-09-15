@@ -283,7 +283,9 @@
         s.project ? [{ text: 'en ' }, { text: s.project, strong: true }]
                   : [{ text: 'claude code' }]
       );
-      bubble.classList.add('insist');
+      // deja de cabecear a los 40 s, pero el globo se queda: el turno sigue
+      // frenado hasta que contestes, y eso no deja de ser cierto por esperar
+      if (s.insist) bubble.classList.add('insist');
     } else if (s.phase === 'done') {
       avatar.poke();
       var parts = s.project ? [{ text: s.project, strong: true }]
