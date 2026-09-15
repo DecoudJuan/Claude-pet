@@ -86,7 +86,7 @@ que se rompió.
 ### 8. El sistema de avatares
 
 - **Registro con contrato** (`setState` / `look` / `poke` / `destroy`). El pet
-  no menciona al pingüino por nombre en ningún lado.
+  no menciona a la nutria por nombre en ningún lado.
 - **El panel se llena solo** desde el registro: avatares y paletas.
 - Documentado en [AVATARS.md](AVATARS.md).
 
@@ -130,14 +130,18 @@ que se rompió.
 
 - **Ctrl+C no dispara ningún hook.** Ni `Stop` ni `StopFailure`: la sesión
   quedaba marcada como trabajando y el avatar tecleaba para siempre.
-- **El transcript es el único rastro.** Mientras el turno corre, crece; cuando
-  se corta, deja de crecer. El latido es la fecha de modificación de ese
-  archivo, sin lanzar un proceso por evento.
-- **El umbral salió de medir, no de adivinar**: en una sesión larga, el 96,5 %
-  de los intervalos entre entradas son menores a 30 s. Por eso 25 s.
-- **Con una excepción**: una llamada a herramienta larga puede estar minutos
-  callada y sigue trabajando. Si la última entrada es una tool que no devolvió,
-  el turno sigue vivo — hasta los 3 minutos, donde se corta igual.
+- **El transcript es el único rastro.** La primera versión miraba el silencio:
+  25 s sin que el archivo creciera y el turno se daba por muerto.
+- **El silencio confundía dos cosas distintas.** Un turno cortado y un turno
+  pensando se ven igual desde afuera: un bloque de razonamiento largo no
+  escribe una línea en minutos, y el pet anunciaba «Terminó» en medio del turno
+  para después volver a teclear.
+- **Ahora la señal es el corte explícito.** Al interrumpir, Claude Code cierra
+  el transcript con una entrada `[Request interrupted by user]`. Eso no se
+  presta a confusión y no hay que esperar nada para verlo.
+- **El silencio quedó de red, a 3 minutos.** Es mejor teclear de más un rato
+  que anunciar un final que no pasó: el globo de fin es lo único que el usuario
+  lee como un hecho.
 
 ### 13. Empaquetado y release
 
