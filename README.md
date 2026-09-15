@@ -6,13 +6,13 @@
 mientras itera, levanta la vista cuando piensa, y te saca un globo de diálogo
 cuando termina — así dejás de mirar la terminal para ver si ya está.**
 
-**El avatar es tuyo.** Viene con un pingüino, pero el dibujo es un módulo
+**El avatar es tuyo.** Viene con una nutria, pero el dibujo es un módulo
 aparte: cualquiera puede escribir el suyo y elegirlo desde el panel.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-d9b45f)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20·%20macOS%20·%20Linux-1f2430)](#instalar)
 [![Runtime](https://img.shields.io/badge/runtime-Electron-4a6fa5)](pet/package.json)
-[![Dependencias del dibujo](https://img.shields.io/badge/dependencias%20del%20dibujo-0-2b6e4f)](avatars/penguin/draw.js)
+[![Dependencias del dibujo](https://img.shields.io/badge/dependencias%20del%20dibujo-0-2b6e4f)](avatars/otter/draw.js)
 [![Red](https://img.shields.io/badge/red-cero%20peticiones-2b6e4f)](SECURITY.md)
 
 </div>
@@ -260,9 +260,9 @@ ventana. Ver [AVATARS.md](AVATARS.md).
 ## Avatares y notebooks
 
 El pet no sabe dibujar. Le pide a un **avatar** que se monte y le avisa en qué
-estado está Claude Code; el avatar decide cómo se ve eso. El pingüino es el que
-viene incluido, no el único: en el código del pet no aparece por nombre en
-ningún lado, lo encuentra en un registro.
+estado está Claude Code; el avatar decide cómo se ve eso. La nutria que viene
+incluida no es la única: en el código del pet no aparece por nombre en ningún
+lado, la encuentra en un registro.
 
 Sumar uno es un archivo que se registra y cuatro métodos que cumplir
 (`setState`, `look`, `poke`, `destroy`). El panel se llena solo.
@@ -299,7 +299,7 @@ Claude-pet/
 │   └── devices.js        El registro de notebooks, y la silueta que dibujan.
 │
 ├── avatars/              Los personajes. Una carpeta por avatar.
-│   └── penguin/
+│   └── otter/
 │       ├── draw.js       El dibujo: SVG a mano, sin API de imágenes. Sirve en
 │       │                 cualquier página web, sin nada del resto.
 │       └── avatar.js     El register() que lo declara ante el sistema.

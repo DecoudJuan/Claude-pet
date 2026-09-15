@@ -130,7 +130,7 @@
     filter: drop-shadow(0 5px 10px rgba(8, 12, 18, .4));
     cursor: grab;
     /* La caja del avatar es cuadrada pero el dibujo no la llena: sin esto, el
-       mouse "toca" al pingüino pasando por las esquinas vacías. Apagado el
+       mouse "toca" al avatar pasando por las esquinas vacías. Apagado el
        rectángulo, sólo los trazos pintados del SVG atajan el puntero — y el
        evento igual burbujea hasta acá para el hover y el arrastre. */
     pointer-events: none;
@@ -196,7 +196,7 @@
 
   /* ---------- panel de ajustes ---------- */
 
-  /* Abre ARRIBA del pingüino, no encima: si lo tapara, se comería los botones
+  /* Abre ARRIBA del avatar, no encima: si lo tapara, se comería los botones
      del costado. Alto y ancho fijos, iguales en los tres tamaños — todo entra
      sin scroll, que en una ventana angosta parte el layout. */
   #panel {
@@ -315,8 +315,8 @@
 <script src="../core/avatars.js"></script>
 <script src="../core/devices.js"></script>
 <!-- catálogo: personajes y máquinas -->
-<script src="../avatars/penguin/draw.js"></script>
-<script src="../avatars/penguin/avatar.js"></script>
+<script src="../avatars/otter/draw.js"></script>
+<script src="../avatars/otter/avatar.js"></script>
 <script src="../devices/laptops.js"></script>
 <!-- la ventana -->
 <script src="window.js"></script>

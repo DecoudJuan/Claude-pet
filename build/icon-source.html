@@ -8,7 +8,11 @@
 <script src="../core/body.js"></script>
 <script src="../core/devices.js"></script>
 <script src="../devices/laptops.js"></script>
-<script src="../avatars/penguin/draw.js"></script>
+<script src="../avatars/otter/draw.js"></script>
 <script>
-  PenguinMascot.mount(document.getElementById('m'), { pointer: 'manual', interactive: false });
+  // El icono se dibuja siempre con la tinta clara: Electron captura con el
+  // tema del sistema, y con el oscuro salía el pelo levantado — que es lo
+  // correcto sobre un escritorio oscuro y lo deslavado para un icono.
+  document.documentElement.dataset.theme = 'light';
+  OtterMascot.mount(document.getElementById('m'), { pointer: 'manual', interactive: false });
 </script>

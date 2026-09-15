@@ -1,4 +1,4 @@
-<title>Pingüino de página</title>
+<title>Nutria de página</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
 
@@ -239,14 +239,14 @@
   <header class="hero">
     <div class="hero-copy">
       <p class="eyebrow">Mascota SVG · sin API de imágenes</p>
-      <h1>Un pingüino que te <em>sigue con la mirada</em>.</h1>
+      <h1>Una nutria que te <em>sigue con la mirada</em>.</h1>
       <p class="lead">
-        Un busto: anteojos de aro negro fino, auriculares de vincha, pico naranja a dos
-        tonos, todo plano y con línea negra. Dibujado a mano en SVG — no generado —
-        así que no necesita ninguna clave de API para existir. Mové el cursor y gira
-        la cabeza. Tocalo y pega un salto.
+        Un busto: hocico ancho, orejas chicas y redondas, bigotes finos, todo plano
+        y en gris pardo. Dibujado a mano en SVG — no generado — así que no necesita
+        ninguna clave de API para existir. Mové el cursor y gira la cabeza. Tocala y
+        pega un salto.
       </p>
-      <p class="poke-hint"><b>→</b> tocá al pingüino</p>
+      <p class="poke-hint"><b>→</b> tocá a la nutria</p>
     </div>
     <div class="stage">
       <div id="hero-mascot"></div>
@@ -255,23 +255,23 @@
 
   <section>
     <p class="eyebrow">Un dibujo, varias tintas</p>
-    <h2>Tres paletas, el mismo pingüino.</h2>
+    <h2>Tres paletas, la misma nutria.</h2>
     <p class="lead">
-      El SVG no tiene ni un color escrito adentro: todo sale de seis variables CSS.
+      El SVG no tiene ni un color escrito adentro: todo sale de cinco variables CSS.
       Cambiar de paleta es cambiar un atributo, no redibujar nada.
     </p>
     <div class="palettes">
       <figure>
-        <div class="slot" data-penguin-mascot data-label="Pingüino, paleta colour"></div>
-        <figcaption><strong>colour</strong>el default</figcaption>
+        <div class="slot" data-otter-mascot data-label="Nutria, paleta río"></div>
+        <figcaption><strong>río</strong>el default</figcaption>
       </figure>
       <figure>
-        <div class="slot" data-penguin-mascot data-palette="riso" data-label="Pingüino, paleta riso"></div>
-        <figcaption><strong>riso</strong>dos tintas</figcaption>
+        <div class="slot" data-otter-mascot data-palette="marina" data-label="Nutria, paleta marina"></div>
+        <figcaption><strong>marina</strong>gris de mar</figcaption>
       </figure>
       <figure>
-        <div class="slot" data-penguin-mascot data-palette="menta" data-label="Pingüino, paleta menta"></div>
-        <figcaption><strong>menta</strong>verde frío</figcaption>
+        <div class="slot" data-otter-mascot data-palette="kelp" data-label="Nutria, paleta kelp"></div>
+        <figcaption><strong>kelp</strong>verde alga</figcaption>
       </figure>
     </div>
   </section>
@@ -282,20 +282,20 @@
     <pre><code>&lt;div id="mascota"&gt;&lt;/div&gt;
 
 &lt;script src="core/body.js"&gt;&lt;/script&gt;
-&lt;script src="avatars/penguin/draw.js"&gt;&lt;/script&gt;
+&lt;script src="avatars/otter/draw.js"&gt;&lt;/script&gt;
 &lt;script&gt;
-  <span class="k">PenguinMascot</span>.mount(<span class="k">document</span>.getElementById(<span class="c">'mascota'</span>), {
-    palette: <span class="c">'riso'</span>
+  <span class="k">OtterMascot</span>.mount(<span class="k">document</span>.getElementById(<span class="c">'mascota'</span>), {
+    palette: <span class="c">'marina'</span>
   });
 &lt;/script&gt;</code></pre>
     <pre><code><span class="c">// o dejá que se monten solos, por atributo</span>
-&lt;div data-penguin-mascot data-palette="menta"&gt;&lt;/div&gt;
-<span class="k">PenguinMascot</span>.mountAll();</code></pre>
+&lt;div data-otter-mascot data-palette="kelp"&gt;&lt;/div&gt;
+<span class="k">OtterMascot</span>.mountAll();</code></pre>
 
     <dl class="opts">
       <div class="row">
         <dt>palette</dt>
-        <dd><code>colour</code>, <code>riso</code> o <code>menta</code>. O definí las tuyas sobrescribiendo <code>--pm-ink</code>, <code>--pm-frame</code>, <code>--pm-snow</code>, <code>--pm-beak</code>, <code>--pm-beak-shade</code> y <code>--pm-silver</code>.</dd>
+        <dd><code>colour</code>, <code>marina</code> o <code>kelp</code>. O definí las tuyas sobrescribiendo <code>--ot-fur</code>, <code>--ot-line</code>, <code>--ot-cream</code>, <code>--ot-inner</code> y <code>--ot-accent</code>.</dd>
       </div>
       <div class="row">
         <dt>label</dt>
@@ -351,11 +351,11 @@
 
 <script src="../core/body.js"></script>
 <script src="../core/devices.js"></script>
-<script src="../avatars/penguin/draw.js"></script>
+<script src="../avatars/otter/draw.js"></script>
 <script src="../devices/laptops.js"></script>
 <script>
-  PenguinMascot.mount(document.getElementById('hero-mascot'), {
-    label: 'Pingüino con anteojos y auriculares. Sigue el cursor; tocalo para que salte.'
+  OtterMascot.mount(document.getElementById('hero-mascot'), {
+    label: 'Nutria con bigotes. Sigue el cursor; tocala para que pegue un salto.'
   });
-  PenguinMascot.mountAll();
+  OtterMascot.mountAll();
 </script>

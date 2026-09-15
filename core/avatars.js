@@ -6,11 +6,11 @@
  * archivo que se registre acá y sumarlo a los <script> de pet.html.
  *
  *   PetAvatars.register({
- *     id:       'pinguino',          // único y estable: se guarda en la config
- *     name:     'Pingüino',          // lo que se lee en el menú
+ *     id:       'nutria',            // único y estable: se guarda en la config
+ *     name:     'Nutria',            // lo que se lee en el menú
  *     palettes: [                    // opcional
  *       { id: 'colour', name: 'Colour' },
- *       { id: 'riso',   name: 'Riso' }
+ *       { id: 'marina', name: 'Marina' }
  *     ],
  *     mount: function (host, opts) { ... }
  *   })

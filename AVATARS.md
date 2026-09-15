@@ -3,8 +3,8 @@
 El pet no sabe dibujar. Sabe una sola cosa: en qué estado está Claude Code. Se
 lo cuenta a un **avatar**, y el avatar decide cómo se ve eso.
 
-Esa separación es a propósito. El pingüino es el primero, no el único, y nada
-del pet lo menciona por nombre: lo encuentra en un registro.
+Esa separación es a propósito. La nutria es la primera, no la única, y nada
+del pet la menciona por nombre: la encuentra en un registro.
 
 ---
 
@@ -118,11 +118,11 @@ Orejas altas, cuernos, una cola, una vincha, un sombrero: **eso vive afuera de
 abajo — que es el borde del viewBox con un margen. Más allá, el pet lo recorta
 y no se ve.
 
-Como referencia: los auriculares del pingüino usan de 18 a 222, bien adentro
-del límite.
+Como referencia: los bigotes de la nutria usan de 19 a 222, bien adentro del
+límite.
 
-El pingüino le aplica un `scale(0.95 1)` a **su cabeza** para verse menos
-rechoncho. Al torso no: eso sería desviarse del canon.
+Si querés estilizar las proporciones, aplicá la transformación a **tu cabeza**.
+Al torso no: eso sería desviarse del canon.
 
 ### Los tres estados
 
@@ -146,7 +146,7 @@ diálogo, que es del pet, no del avatar. En `done` sí le pega un `poke()`.
 ## Sumar uno
 
 **1. La carpeta.** `avatars/zorro/`, con el dibujo y el `register()` separados
-como en el pingüino:
+como en la nutria:
 
 ```
 avatars/zorro/
@@ -157,8 +157,8 @@ avatars/zorro/
 **2. Los `<script>`.** En `app/window.html`, en la sección de catálogo:
 
 ```html
-<script src="../avatars/penguin/draw.js"></script>
-<script src="../avatars/penguin/avatar.js"></script>
+<script src="../avatars/otter/draw.js"></script>
+<script src="../avatars/otter/avatar.js"></script>
 <script src="../avatars/zorro/draw.js"></script>     <!-- el tuyo -->
 <script src="../avatars/zorro/avatar.js"></script>
 ```
@@ -288,20 +288,20 @@ window.PetAvatars.register({
 
 Lo que **no** hace y deberías sumarle: parpadeo, deriva cuando no hay cursor
 cerca, tecleo animado en `working`, ojos cerrados en `sleeping` y una tinta que
-se levante sobre fondo oscuro. Todo eso está resuelto en `avatars/penguin/draw.js`.
+se levante sobre fondo oscuro. Todo eso está resuelto en `avatars/otter/draw.js`.
 
-## El pingüino como referencia
+## La nutria como referencia
 
-`avatars/penguin/draw.js` es la implementación completa del contrato y se puede leer
+`avatars/otter/draw.js` es la implementación completa del contrato y se puede leer
 como ejemplo. Vale la pena mirar tres cosas:
 
 - **Paletas por variables CSS.** El SVG no tiene ni un color escrito adentro:
-  todo sale de seis variables. Cambiar de paleta es cambiar un atributo, no
+  todo sale de cinco variables. Cambiar de paleta es cambiar un atributo, no
   redibujar.
-- **Tinta que se levanta en tema oscuro.** Un pingüino negro sobre un fondo
-  negro es una mancha. El componente sube la tinta del cuerpo cuando detecta
-  fondo oscuro, y le da al marco de los anteojos una tinta propia más oscura
-  para que no se funda con la piel.
+- **Tinta que se levanta en tema oscuro.** Un gris pardo sobre un fondo oscuro
+  es una mancha sin forma. El componente sube la tinta del pelo cuando detecta
+  fondo oscuro, y le da al contorno una tinta propia más oscura para que la
+  nariz y el hocico no se fundan con la cara.
 - **El bucle.** Un solo `requestAnimationFrame` con interpolación suave hacia
   un objetivo, y los estados escriben ese objetivo en vez de animar cada uno
   por su lado.
