@@ -48,6 +48,22 @@ function run() {
   process.exit(0);
 }
 
+/*
+ * Claude Code manda Notification por dos motivos que no se parecen en nada:
+ * te pide permiso para algo — y ahí el turno está frenado hasta que contestes,
+ * que es el caso caro — o pasaron 60 s sin que escribas y te da un codazo. Lo
+ * segundo no es una espera: ya contestó, la pelota es tuya y no hay nada
+ * trabado. Tratarlos igual hacía que el pet sacara la notebook y dijera «te
+ * espera» cuando no esperaba nada.
+ *
+ * Se descarta el codazo por su texto y no se filtra al revés — dejando pasar
+ * sólo lo que diga "permission" — para que un aviso nuevo que sí frene el
+ * turno se siga viendo en vez de desaparecer en silencio.
+ */
+function isIdleNudge(msg) {
+  return /waiting for (your )?input/i.test(String(msg || ''));
+}
+
 // No intenta ser exhaustivo: si no matchea, el pet simplemente no se duerme.
 function looksLimited(msg) {
   return /usage limit|rate limit|limit reached|out of tokens|sin tokens|l[ií]mite de uso/i
@@ -57,6 +73,11 @@ function looksLimited(msg) {
 function write() {
   let payload = {};
   try { payload = JSON.parse(input || '{}'); } catch (e) { /* sin payload, seguimos */ }
+
+  // El codazo no dice nada que el pet no sepa: se sale sin tocar el archivo,
+  // así el estado que ya había — trabajando, esperando, en reposo — queda como
+  // estaba y no se le corre el updatedAt a nadie.
+  if (KIND === 'waiting' && isIdleNudge(payload.message)) return;
 
   const id = String(payload.session_id || 'sin-id').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
   fs.mkdirSync(DIR, { recursive: true });

@@ -106,4 +106,19 @@ function isInterrupt(entry) {
   });
 }
 
-module.exports = { isActive: isActive, HARD_QUIET_MS: HARD_QUIET_MS };
+// ¿El transcript creció después de este instante?
+//
+// Es lo que distingue contestar un pedido de permiso de dejarlo ahí: contestar
+// hace trabajo, y el trabajo se escribe. Ignorarlo no escribe una línea. Sin
+// transcript no se asume nada — para afirmar que labura hace falta la prueba,
+// no su ausencia.
+function movedSince(rec, since) {
+  if (!rec || !rec.transcript || !since) return false;
+  try { return fs.statSync(rec.transcript).mtimeMs > since; } catch (e) { return false; }
+}
+
+module.exports = {
+  isActive: isActive,
+  movedSince: movedSince,
+  HARD_QUIET_MS: HARD_QUIET_MS
+};

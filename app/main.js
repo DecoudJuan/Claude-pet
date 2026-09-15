@@ -157,11 +157,16 @@ function project(sessions) {
   });
   const working = sessions.filter(function (s) {
     if (now - (s.updatedAt || 0) >= WORKING_TTL_MS) return false;
-    const claims = s.state === 'working' ||
-                   (s.state === 'waiting' && now - (s.updatedAt || 0) >= WAITING_TTL_MS);
+    // Un aviso vencido no prueba que hayas contestado: prueba que pasaron 40 s.
+    // Si lo dejaste ahí, Claude Code está tan quieto como vos, y el pet no
+    // tiene por qué ponerse a teclear. Lo que sí distingue una cosa de la otra
+    // es el transcript: contestar hace trabajo y el trabajo se escribe.
+    const answered = s.state === 'waiting' &&
+                     now - (s.updatedAt || 0) >= WAITING_TTL_MS &&
+                     turn.movedSince(s, s.updatedAt);
     // Decir que trabaja no alcanza: si cortaste el turno con Ctrl+C ningún hook
     // lo avisa, así que se confirma contra el latido del transcript.
-    return claims && turn.isActive(s, now);
+    return (s.state === 'working' || answered) && turn.isActive(s, now);
   });
 
   if (waiting) {
