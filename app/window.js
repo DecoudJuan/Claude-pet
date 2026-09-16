@@ -16,6 +16,10 @@
   var greetEl = document.getElementById('greet');
   var panel   = document.getElementById('panel');
   var btnMenu = document.getElementById('btn-menu');
+  var btnSes  = document.getElementById('btn-ses');
+  var pgSet   = document.getElementById('page-settings');
+  var pgSes   = document.getElementById('page-sessions');
+  var sesList = document.getElementById('ses-list');
   var chromeEl = document.getElementById('chrome');
   var selAv   = document.getElementById('sel-avatar');
   var selPal  = document.getElementById('sel-palette');
@@ -128,13 +132,91 @@
     window.pet.setAvatar({ avatar: current && current.id, palette: conf.palette, device: conf.device });
   });
 
-  function togglePanel(open) {
-    var next = open === undefined ? panel.hidden : open;
+  // Una caja, dos páginas. `page` dice cuál, y volver a apretar el mismo botón
+  // la cierra — como hacía el de ajustes cuando era el único.
+  var page = 'settings';
+
+  function togglePanel(open, which) {
+    var next = open === undefined ? (panel.hidden || which !== page) : open;
+    if (next && which) page = which;
     panel.hidden = !next;
+    pgSet.hidden = page !== 'settings';
+    pgSes.hidden = page !== 'sessions';
     stage.classList.toggle('open', next);
-    btnMenu.setAttribute('aria-expanded', String(next));
-    if (next) { hush(); renderPanel(); }
+    btnMenu.setAttribute('aria-expanded', String(next && page === 'settings'));
+    btnSes.setAttribute('aria-expanded', String(next && page === 'sessions'));
+    if (next) { hush(); if (page === 'settings') renderPanel(); else renderSessions(); }
   }
+
+  /* ---------- la lista de sesiones ---------- */
+
+  var roster = [];   // lo último que mandó el proceso principal
+
+  /*
+   * El avatar muestra una sola sesión — la que manda — y eso está bien para
+   * mirarlo de reojo. Esta lista es para cuando querés saber el resto: quiénes
+   * están, en qué anda cada una y desde cuándo.
+   *
+   * Sin innerHTML, igual que el globo: los nombres salen del cwd de un hook.
+   */
+  function renderSessions() {
+    sesList.textContent = '';
+
+    if (!roster.length) {
+      sesList.appendChild(row('is-empty', '', 'Ninguna abierta', ''));
+      return;
+    }
+
+    var now = Date.now();
+    roster.forEach(function (s) {
+      sesList.appendChild(row(
+        'is-' + s.state,
+        s.state,
+        s.project || 'claude code',
+        detail(s, now)
+      ));
+    });
+  }
+
+  function detail(s, now) {
+    if (s.state === 'waiting') return 'te espera';
+    if (s.state === 'limited') return 'sin tokens';
+    // Cuánto hace que labura es el dato que no está en ningún otro lado: el
+    // globo lo cuenta recién cuando termina.
+    if (s.state === 'working') return human(Math.max(0, now - s.since));
+    return 'en reposo';
+  }
+
+  function row(cls, state, who, what) {
+    var li = document.createElement('li');
+    li.className = 'ses ' + cls;
+
+    if (state) {
+      var dot = document.createElement('span');
+      dot.className = 'dot';
+      li.appendChild(dot);
+    }
+
+    var name = document.createElement('span');
+    name.className = 'who';
+    name.textContent = who;
+    li.appendChild(name);
+
+    if (what) {
+      var d = document.createElement('span');
+      d.className = 'what';
+      d.textContent = what;
+      li.appendChild(d);
+    }
+    return li;
+  }
+
+  // El reloj de «hace cuánto» corre acá: el proceso principal manda el instante
+  // en que arrancó y no lo reenvía cada segundo, así que si esto no se redibuja
+  // el número queda clavado mientras mirás.
+  setInterval(function () {
+    if (!panel.hidden && page === 'sessions') renderSessions();
+  }, 1000);
 
   /* ---------- hover sólo sobre el dibujo ---------- */
 
@@ -175,7 +257,8 @@
     if (panel.hidden && !down) { setInteractive(false); hot(false); }
   });
 
-  btnMenu.addEventListener('click', function (e) { e.stopPropagation(); togglePanel(); });
+  btnMenu.addEventListener('click', function (e) { e.stopPropagation(); togglePanel(undefined, 'settings'); });
+  btnSes.addEventListener('click', function (e) { e.stopPropagation(); togglePanel(undefined, 'sessions'); });
   document.getElementById('btn-close').addEventListener('click', function () { window.pet.close(); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') togglePanel(false); });
   host.addEventListener('pointerdown', function () { togglePanel(false); });
@@ -307,6 +390,8 @@
   window.pet.onState(function (s) {
     var was = phase;
     phase = s.phase;
+    roster = s.list || [];
+    if (!panel.hidden && page === 'sessions') renderSessions();
     if (!avatar) return;
 
     // La pose es del conjunto y el aviso es de una sesión: mientras una labura,

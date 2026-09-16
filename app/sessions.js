@@ -178,6 +178,56 @@ function branchOf(cwd) {
   return name;
 }
 
+/* ---------- la lista, sin resumir ---------- */
+
+/*
+ * El globo dice quién manda; esto dice quiénes están. Es la misma verdad que
+ * la pose, contada sin colapsar: una fila por sesión, con el mismo nombre que
+ * usaría el globo si le tocara hablar de ella.
+ *
+ * `since` va como instante y no como duración: así el payload sólo cambia
+ * cuando cambia algo de verdad — main.js no reenvía lo que no cambió — y el
+ * reloj corre del lado de la ventana, que es donde se ve.
+ */
+const RANK = { waiting: 0, working: 1, limited: 2, idle: 3 };
+
+function roster(list, now, byId) {
+  // El estado se calcula una vez y se ordena con él: preguntarlo dentro del
+  // sort es pagar los selectores —que leen el transcript— una vez por
+  // comparación.
+  const rows = list.map(function (s) {
+    return {
+      rec: s,
+      state: waits(s, now) ? 'waiting'
+           : works(s, now) ? 'working'
+           : s.limited ? 'limited'
+           : 'idle'
+    };
+  });
+
+  // El mismo orden de importancia que la pose: primero lo que no puede avanzar
+  // solo, después lo que avanza, al final lo que no hace nada. Y adentro de
+  // cada grupo, los mismos desempates que usa el globo para elegir a quién
+  // nombra — byOldest para las trabadas, byNewest para el resto. Si acá se
+  // ordenara distinto, la primera de la lista no sería la que habla.
+  rows.sort(function (a, b) {
+    if (RANK[a.state] !== RANK[b.state]) return RANK[a.state] - RANK[b.state];
+    return a.state === 'waiting' ? byOldest(a.rec, b.rec) : byNewest(a.rec, b.rec);
+  });
+
+  return rows.map(function (r) {
+    return {
+      id: r.rec.sessionId,
+      project: byId[r.rec.sessionId] || '',
+      state: r.state,
+      // Para la que labura, desde cuándo labura: es el dato que no está en
+      // ningún otro lado — el globo lo cuenta recién cuando termina.
+      since: r.state === 'working' ? (r.rec.startedAt || r.rec.updatedAt)
+                                   : (r.rec.updatedAt || 0)
+    };
+  });
+}
+
 /* ---------- la escena ---------- */
 
 // El proyector tiene memoria — qué finales ya contó y cuáles están haciendo
@@ -257,7 +307,7 @@ function create() {
     const working = sessions.filter(function (s) { return works(s, now); })
       .sort(byNewest);
 
-    const scene = { notice: pick(now, working) };
+    const scene = { notice: pick(now, working), list: roster(sessions, now, byId) };
 
     // Primero que todo: sin tokens no hay nada que hacer. Si no, el avatar se
     // queda tecleando delante de una terminal que no puede avanzar — que es
@@ -334,6 +384,7 @@ module.exports = {
   read: read,
   create: create,
   labels: labels,
+  roster: roster,
   answered: answered,
   waits: waits,
   works: works,
