@@ -130,6 +130,31 @@ check('pero si otra labura, no duerme',
 const out = { window: 'five_hour', resetsAt: now + 3600000, account: 'personal' };
 check('la statusline manda igual', boot().project([viva], now, out).phase, 'sleeping');
 
+/* ---------- la lista del panel ---------- */
+
+// El avatar muestra una sola; la lista las muestra a todas, en el mismo orden
+// de importancia que usa la pose para elegir a quién mostrar.
+const lista = boot().project([viva, seca, vieja, lenta], now, null).list;
+check('las lista a todas', lista.length, 4);
+check('primero la que no puede avanzar sola', lista[0].state, 'waiting');
+check('despues la que se movio recien', lista[1].id, 'viva');
+check('y la otra que labura', lista[2].id, 'lenta');
+check('al final la que no puede hacer nada', lista[3].state, 'limited');
+
+// El instante y no la duración: main.js no reenvía lo que no cambió, así que
+// si viajara ya calculada el número se quedaría clavado en el panel.
+check('la que labura dice desde cuando', lista[1].since, viva.startedAt);
+check('y con el nombre que usaria el globo', lista[1].project, 'viva');
+
+// La invariante: la primera de la lista es la que habla. Si la lista se
+// ordenara con otro criterio que la pose, el panel contradiría al globo.
+var escena = boot().project([viva, seca, vieja, lenta], now, null);
+check('la primera de la lista es la que nombra el globo',
+      escena.list[0].project, escena.project);
+escena = boot().project([viva, lenta], now, null);
+check('y tambien cuando la que manda es una que labura',
+      escena.list[0].project, escena.project);
+
 /* ---------- ponerle nombre a cada una ---------- */
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pet-labels-'));

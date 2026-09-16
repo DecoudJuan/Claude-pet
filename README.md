@@ -86,6 +86,18 @@ que tiene que resumir sin borrar lo que importa. Separa dos cosas:
 Dos terminales en el mismo repo se distinguen por la rama, y si también es la
 misma, por orden de antigüedad (`claude-pets #1`, `claude-pets #2`).
 
+Y si querés ver a todas y no sólo a la que manda, el botón de la lista abre el
+panel de **sesiones**: una fila por cada una, con el punto lleno si avanza y
+hueco si no, y desde cuándo labura.
+
+```
+SESIONES
+● darwin-errors                 te espera
+● claude-pets #1               1 min 35 s
+● claude-pets #2                      8 s
+○ prompt-me                     en reposo
+```
+
 Una sesión que se queda sin tokens no duerme al pet si otra está laburando —
 con dos cuentas abiertas lo normal es justamente eso.
 
@@ -251,7 +263,8 @@ Claude Code lo menciona en el texto de un aviso, se duerme igual pero muestra
 |---|---|
 | **Arrastrar** | Lo llevás a cualquier lado. Se acuerda de dónde lo dejaste. |
 | **Click** sin arrastrar | Lo tocás y salta. |
-| **Hover sobre el dibujo** | Aparecen dos botones apilados al costado. |
+| **Hover sobre el dibujo** | Aparecen tres botones apilados al costado. |
+| **☰** | Panel de sesiones: todas las abiertas, en qué anda cada una y desde cuándo. |
 | **⋯** | Panel de ajustes: tamaño, avatar, paleta y notebook. |
 | **✕** | Lo cierra. Vuelve cuando arranques de cero, no en el próximo prompt ni porque abras otra terminal al lado. |
 | **Botón derecho** | Menú nativo: volver abajo a la izquierda, sacar el «siempre encima», abrir la carpeta de estado, salir. |
