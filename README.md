@@ -6,8 +6,8 @@
 mientras itera, levanta la vista cuando piensa, y te saca un globo de diálogo
 cuando termina — así dejás de mirar la terminal para ver si ya está.**
 
-**El avatar es tuyo.** Viene con un pingüino y una nutria, pero el dibujo es
-un módulo aparte: cualquiera puede escribir el suyo y elegirlo desde el panel.
+**El avatar es tuyo.** Viene con un pingüino, una nutria y un oso, pero el
+dibujo es un módulo aparte: cualquiera puede escribir el suyo y elegirlo desde el panel.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-d9b45f)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20·%20macOS%20·%20Linux-1f2430)](#instalar)
@@ -19,7 +19,7 @@ un módulo aparte: cualquiera puede escribir el suyo y elegirlo desde el panel.
 
 ## 🐧 Mandá un PR con tu propia mascota
 
-El pingüino y la nutria son los dos primeros, no los dos únicos. **Si dibujaste
+El pingüino, la nutria y el oso son los primeros, no los únicos. **Si dibujaste
 una y anda, mandala**: es una carpeta en `avatars/`, dos `<script>` en
 `app/window.html` y nada más — el pet no menciona a ninguna por nombre, las
 encuentra en un registro, así que no hay que tocarlo.
@@ -308,8 +308,8 @@ ventana. Ver [AVATARS.md](AVATARS.md).
 ## Avatares y notebooks
 
 El pet no sabe dibujar. Le pide a un **avatar** que se monte y le avisa en qué
-estado está Claude Code; el avatar decide cómo se ve eso. El pingüino y la
-nutria son los que vienen incluidos, no los únicos: en el código del pet no
+estado está Claude Code; el avatar decide cómo se ve eso. El pingüino, la
+nutria y el oso son los que vienen incluidos, no los únicos: en el código del pet no
 aparece ninguno por nombre, los encuentra en un registro.
 
 Sumar uno es un archivo que se registra y cuatro métodos que cumplir

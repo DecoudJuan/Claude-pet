@@ -19,7 +19,7 @@
  *     id:    'macbook-midnight',
  *     name:  'MacBook · Midnight',
  *     lid:   '#2e3440',     // dorso de la tapa
- *     badge: 'glow',        // 'glow' | 'bar' | 'ring' | 'none'
+ *     badge: 'apple',       // 'apple' | 'glow' | 'bar' | 'ring' | 'none'
  *     badgeColor: '#d8dadd'
  *   })
  */
@@ -29,7 +29,7 @@
   var order = [];
   var byId = {};
 
-  var BADGES = ['glow', 'bar', 'ring', 'none'];
+  var BADGES = ['glow', 'bar', 'ring', 'apple', 'none'];
 
   function register(def) {
     if (!def || !def.id) throw new Error('PetDevices.register: falta id');
@@ -68,6 +68,21 @@
       case 'glow': return '<circle class="pd-badge" cx="' + cx + '" cy="' + cy + '" r="8"/>';
       case 'bar':  return '<rect class="pd-badge" x="' + (cx - 12) + '" y="' + (cy - 3) + '" width="24" height="6" rx="3"/>';
       case 'ring': return '<circle class="pd-badge-ring" cx="' + cx + '" cy="' + cy + '" r="8"/>';
+      // La manzanita. Es la única insignia que no es una primitiva: a este
+      // tamaño la silueta con hoja y mordisco es lo que dice "Mac" de un
+      // vistazo, y un círculo pelado no lo dice. Va dibujada alrededor del
+      // origen y se lleva al centro de la tapa con el transform, así que las
+      // curvas se leen sin hacer cuentas.
+      case 'apple':
+        return '<g transform="translate(' + cx + ' ' + cy + ') scale(.55) translate(-1.5 3)">' +
+          '<path class="pd-badge" d="M0 -7 C-4 -7 -6 -10 -10 -9 C-16 -8 -19 -3 -18 3' +
+          ' C-17 9 -12 16 -7 16 C-4 16 -2 14 1 14 C4 14 6 17 10 15' +
+          ' C14 12 18 6 19 1 C14 0 11 -4 12 -8 C8 -10 4 -9 0 -7 Z"/>' +
+          '<path class="pd-badge" d="M1 -12 C2 -18 7 -22 13 -22 C12 -16 8 -12 1 -12 Z"/>' +
+          // el mordisco es un agujero pintado del color de la tapa: no hay
+          // fondo detrás del logo, así que recortarlo de verdad no serviría
+          '<circle class="pd-apple-bite" cx="16" cy="-5" r="5"/>' +
+          '</g>';
       default:     return '';
     }
   }
@@ -101,6 +116,7 @@
     el.textContent = [
       '.pd-lid        { fill: var(--pd-lid, #1f252d); stroke: var(--pd-edge, #000); stroke-width: 5; stroke-linejoin: round; }',
       '.pd-badge      { fill: var(--pd-badge, #d8dadd); }',
+      '.pd-apple-bite { fill: var(--pd-lid, #1f252d); }',
       '.pd-badge-ring { fill: none; stroke: var(--pd-badge, #d8dadd); stroke-width: 3; }'
     ].join('\n');
     doc.head.appendChild(el);
