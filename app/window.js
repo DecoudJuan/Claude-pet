@@ -168,11 +168,19 @@
    * flotando sobre el escritorio hasta que te acordás de sacarla.
    *
    * Así que si en tres segundos no pasaste el mouse por encima, se apaga y se
-   * cierra. Tocarlo una vez lo cancela para siempre: a partir de ahí lo estás
-   * usando, y cerrarte un panel mientras elegís avatar sería peor que dejarlo
-   * abierto. Por eso tampoco se rearma al salir — el desplegable de un <select>
-   * lo dibuja el sistema operativo FUERA de la ventana, así que abrirlo cuenta
-   * como salir del panel y el fade te lo cerraría en la cara.
+   * cierra. Mientras el mouse está adentro no se va: lo estás usando, y cerrarte
+   * el panel mientras elegís avatar sería peor que dejarlo abierto.
+   *
+   * La primera versión cancelaba PARA SIEMPRE al entrar, y eso lo rompía en el
+   * caso más común de todos: el panel abre justo arriba del botón, así que al
+   * volver a lo tuyo le pasás por encima sí o sí — y ahí quedaba abierto para
+   * la eternidad, que es exactamente lo que esto venía a arreglar. Ahora al
+   * salir se rearma.
+   *
+   * La excepción es el <select>: su desplegable lo dibuja el sistema operativo
+   * FUERA de la ventana, así que abrirlo se ve igual que irse del panel.
+   * Mientras uno tenga el foco no se rearma nada, o el fade te cerraría el
+   * panel con la lista de avatares desplegada encima.
    */
   var closeTimer = 0;
   var fadeTimer = 0;
@@ -198,7 +206,28 @@
     }, 3000);
   }
 
+  // Mientras el mouse está adentro el panel no se va; cuando sale, vuelve a
+  // contar. Que se rearme es lo que hace que pasarle por encima al irte no lo
+  // deje abierto para siempre.
+  function rearmIfAway() {
+    if (panel.hidden || page === 'setup') return;
+    // El <select> desplegado tiene el foco y su lista está fuera de la ventana:
+    // para el DOM el mouse se fue, pero lo estás usando.
+    var a = document.activeElement;
+    if (a && a.tagName === 'SELECT') return;
+    // Salió el foco pero el mouse volvió a entrar: no hay nada que rearmar.
+    try { if (panel.matches(':hover')) return; } catch (e) { /* da igual */ }
+    armAutoClose();
+  }
+
   panel.addEventListener('pointerenter', cancelAutoClose);
+  panel.addEventListener('pointerleave', rearmIfAway);
+
+  // Al cerrar el desplegable el foco vuelve, y recién ahí se puede volver a
+  // contar: elegiste, y si no estás encima el panel ya no hace falta.
+  [selAv, selPal, selDev].forEach(function (el) {
+    el.addEventListener('blur', rearmIfAway);
+  });
 
   /* ---------- el paso que falta ---------- */
 
