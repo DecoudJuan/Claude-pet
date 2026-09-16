@@ -29,7 +29,8 @@ Y no empezás de cero: el repo trae una skill que le explica a Claude Code el
 contrato, qué tiene que comunicar cada estado y qué errores de dibujo rompen la
 ventana.
 
-**→ [Cómo crear un avatar](AVATARS.md)** · [abrir un
+**→ [Cómo crear un avatar](AVATARS.md)** · [cómo se
+aporta](CONTRIBUTING.md) · [abrir un
 PR](https://github.com/DecoudJuan/Claude-pet/compare)
 
 ## El problema
@@ -484,6 +485,7 @@ Claude-pet/
 │                         hooks. El lugar para iterar un dibujo.
 │
 ├── AVATARS.md            El contrato de avatares y cómo sumar uno.
+├── CONTRIBUTING.md       Qué se acepta —mascotas y notebooks— y cómo mandarlo.
 ├── ROADMAP.md            En qué orden se construyó esto y qué falta.
 ├── SECURITY.md           Qué guarda, qué no, y por qué está cerrado como está.
 └── .claude/skills/       Skills para diseñar avatares y notebooks con Claude.
@@ -493,6 +495,20 @@ Claude-pet/
 `avatars` y `devices` dependen sólo de `core`. `app` los usa a los tres y es la
 única pieza que sabe que Claude Code existe — el dibujo de un avatar se puede
 poner en cualquier página web con un `<div>` y dos líneas.
+
+## Aportar
+
+**El repo acepta mascotas y notebooks.** Es lo que el sistema de avatares está
+hecho para recibir: una carpeta en `avatars/`, dos `<script>`, y no se toca ni
+una línea del pet. Una notebook nueva es literalmente una línea.
+
+Del resto —funciones nuevas, reescrituras, dependencias— la respuesta suele ser
+que no, y es mejor saberlo antes de escribir el código que después. Si
+encontraste un bug, abrí un issue en vez de un PR: si el diagnóstico cierra, te
+lo digo ahí y recién entonces vale la pena el trabajo.
+
+**→ [CONTRIBUTING.md](CONTRIBUTING.md)** · [código de
+conducta](CODE_OF_CONDUCT.md)
 
 ## Seguridad y privacidad
 

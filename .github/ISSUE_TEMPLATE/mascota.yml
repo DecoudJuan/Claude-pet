@@ -1,0 +1,47 @@
+name: Proponer una mascota
+description: Se te ocurrió un bicho (o lo que sea) que le quedaría bien al pet.
+labels: ["avatar"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Esto es para **proponer** la idea. Si ya la dibujaste, no hace falta un
+        issue: mandá el PR directo, mirá [CONTRIBUTING.md](https://github.com/DecoudJuan/Claude-pet/blob/main/CONTRIBUTING.md).
+
+  - type: input
+    id: quien
+    attributes:
+      label: Quién es
+      placeholder: Un zorro, un axolotl, una tostadora…
+    validations:
+      required: true
+
+  - type: textarea
+    id: estados
+    attributes:
+      label: Qué hace en cada estado
+      description: |
+        Es la parte que de verdad decide si una mascota funciona. No hace falta
+        que estén los siete, pero cuantos más, mejor.
+      value: |
+        - **Trabajando:**
+        - **Pensando:**
+        - **Te espera:**
+        - **Durmiendo (sin tokens):**
+        - **Terminó:**
+    validations:
+      required: true
+
+  - type: textarea
+    id: referencias
+    attributes:
+      label: Referencias
+      description: Un boceto, una foto, otro dibujo que te guste. Lo que tengas.
+
+  - type: checkboxes
+    id: propio
+    attributes:
+      label: Antes de mandar
+      options:
+        - label: No es un personaje con dueño (Pikachu, Mario, la mascota de una marca). Lo que entra al repo queda bajo MIT.
+          required: true

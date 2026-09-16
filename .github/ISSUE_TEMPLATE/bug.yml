@@ -1,0 +1,70 @@
+name: Algo anda mal
+description: El pet hace algo raro, no aparece, no se va, o se ve mal.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Antes que nada: **el pet es un adorno**. Si te rompió un turno de Claude
+        Code, eso es lo más grave que puede pasar y lo quiero saber ya.
+
+  - type: textarea
+    id: que-pasa
+    attributes:
+      label: Qué pasa
+      description: Qué hace el pet, y qué esperabas que hiciera.
+      placeholder: |
+        Cerré la última terminal y el pet se quedó abierto.
+        Esperaba que se despidiera y se cerrara solo.
+    validations:
+      required: true
+
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Cómo se repite
+      description: Los pasos, aunque sean obvios. «No sé» también es una respuesta válida.
+      placeholder: |
+        1. Abrir dos terminales con Claude Code
+        2. Cerrar las dos con la ✕
+        3. Esperar un minuto
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Versión del pet
+      description: Está en el panel de ajustes, abajo de todo.
+      placeholder: "1.4.2"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: sistema
+    attributes:
+      label: Sistema
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+
+  - type: dropdown
+    id: instalacion
+    attributes:
+      label: Cómo lo instalaste
+      options:
+        - Instalador (.exe, .dmg, .AppImage, .deb)
+        - Clonando el repo (npm start)
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Cualquier otra cosa
+      description: |
+        Una captura ayuda más que tres párrafos. Si lo corrés desde el repo,
+        la salida de la terminal donde lanzaste `npm start` también.

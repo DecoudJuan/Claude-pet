@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Un problema de seguridad
+    url: https://github.com/DecoudJuan/Claude-pet/blob/main/SECURITY.md
+    about: Leé primero la postura de seguridad. Si preferís avisar en privado, está el mail del perfil.
+  - name: Cómo dibujar un avatar
+    url: https://github.com/DecoudJuan/Claude-pet/blob/main/AVATARS.md
+    about: El contrato, el cuerpo canónico y un esqueleto que ya anda.

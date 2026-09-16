@@ -1,0 +1,28 @@
+name: Una idea
+description: Se te ocurrió algo que el pet podría hacer.
+labels: ["idea"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Leé primero el **Falta** de [ROADMAP.md](https://github.com/DecoudJuan/Claude-pet/blob/main/ROADMAP.md): puede
+        que ya esté anotada, con el motivo por el que todavía no está.
+
+        Aviso honesto: el pet es chico a propósito y la mayoría de las ideas
+        terminan en «no». Que quede anotada igual sirve — varias cosas que hoy
+        están salieron de acá.
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: La idea
+    validations:
+      required: true
+
+  - type: textarea
+    id: porque
+    attributes:
+      label: Qué problema resuelve
+      description: Qué te pasa hoy sin eso. Es lo que decide si entra o no.
+    validations:
+      required: true
