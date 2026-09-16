@@ -211,23 +211,55 @@
   // deje abierto para siempre.
   function rearmIfAway() {
     if (panel.hidden || page === 'setup') return;
-    // El <select> desplegado tiene el foco y su lista está fuera de la ventana:
-    // para el DOM el mouse se fue, pero lo estás usando.
-    var a = document.activeElement;
-    if (a && a.tagName === 'SELECT') return;
+    // Con el desplegable abierto la lista está fuera de la ventana: para el DOM
+    // el mouse se fue, pero lo estás usando.
+    if (picking) return;
     // Salió el foco pero el mouse volvió a entrar: no hay nada que rearmar.
     try { if (panel.matches(':hover')) return; } catch (e) { /* da igual */ }
     armAutoClose();
   }
 
+  /*
+   * El desplegable abierto, y sólo ése.
+   *
+   * Antes esto se preguntaba mirando si el <select> tenía el foco, y ahí estaba
+   * el error que hacía que el panel se quedara abierto para siempre justo
+   * después de cambiar de avatar: elegir una opción NO le saca el foco al
+   * select y tampoco dispara blur. O sea que el mouse se iba, rearmIfAway veía
+   * un select enfocado, y no contaba nunca más. Cambiar algo — que es cuando ya
+   * terminaste con el panel — era la única forma de dejarlo pegado.
+   *
+   * Lo que hace falta saber no es quién tiene el foco sino si la lista del
+   * sistema está abierta encima. Se abre con el mousedown y se cierra sola; que
+   * se haya cerrado se nota porque la página vuelve a recibir movimientos del
+   * mouse — mientras la lista está arriba, no llega ninguno.
+   */
+  var picking = false;
+
+  function endPick() {
+    if (!picking) return;
+    picking = false;
+    rearmIfAway();
+  }
+
+  [selAv, selPal, selDev].forEach(function (el) {
+    el.addEventListener('mousedown', function () { picking = true; cancelAutoClose(); });
+    // Elegiste. Si el mouse ya no está encima, el panel empieza a contar; si
+    // todavía está, cuenta cuando lo saques. Es lo mismo que pasa al abrirlo.
+    el.addEventListener('change', endPick);
+    el.addEventListener('blur', endPick);
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' || e.key === 'Enter' || e.key === 'Tab') endPick();
+    });
+  });
+
+  // La red de seguridad: si la página recibe un movimiento del mouse es porque
+  // la lista del sistema ya no está arriba, sea porque elegiste o porque la
+  // cerraste con Escape en una tecla que no vimos pasar.
+  document.addEventListener('pointermove', function () { if (picking) endPick(); });
+
   panel.addEventListener('pointerenter', cancelAutoClose);
   panel.addEventListener('pointerleave', rearmIfAway);
-
-  // Al cerrar el desplegable el foco vuelve, y recién ahí se puede volver a
-  // contar: elegiste, y si no estás encima el panel ya no hace falta.
-  [selAv, selPal, selDev].forEach(function (el) {
-    el.addEventListener('blur', rearmIfAway);
-  });
 
   /* ---------- el paso que falta ---------- */
 
