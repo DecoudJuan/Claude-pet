@@ -196,4 +196,35 @@ check('el que no colisiona queda limpio', mixto.c, 'otra-cosa');
 
 fs.rmSync(tmp, { recursive: true, force: true });
 
+/* ---------- la sesión que se fue sin avisar ---------- */
+
+/*
+ * Cerrar la terminal a lo bruto mata a Claude Code sin correr SessionEnd: el
+ * archivo queda y el pet se quedaba con él hasta seis horas — con una sesión
+ * fantasma abierta no se apaga nunca, que es el caso que esto arregla. El pid
+ * del dueño es lo que lo desmiente.
+ */
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pet-vivas-'));
+function file(id, rec) {
+  fs.writeFileSync(path.join(dir, id + '.json'), JSON.stringify(Object.assign(ses(id), rec)));
+}
+
+// 2^31-1: el pid más alto que puede existir, y no existe.
+const MUERTO = 2147483647;
+file('viva', { pid: process.pid });
+file('muerta', { pid: MUERTO });
+file('vieja', {});   // escrita por un hook anterior al pid
+
+const leidas = sessions.read(dir, now).map(function (s) { return s.sessionId; }).sort();
+check('la sesión cuyo proceso murió no cuenta', leidas.indexOf('muerta'), -1);
+check('la viva sigue', leidas.indexOf('viva') >= 0, true);
+check('y la que no anotó pid no se toca', leidas.indexOf('vieja') >= 0, true);
+check('la muerta además se borra del disco', fs.existsSync(path.join(dir, 'muerta.json')), false);
+
+check('sin pid no se afirma nada', sessions.alive({}), true);
+check('un pid basura tampoco', sessions.alive({ pid: 'hola' }), true);
+check('el propio proceso está vivo', sessions.alive({ pid: process.pid }), true);
+
+fs.rmSync(dir, { recursive: true, force: true });
+
 done('sessions.js');

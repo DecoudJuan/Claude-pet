@@ -20,11 +20,11 @@ const HOOK = path.join(__dirname, '..', 'app', 'hook.js');
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pet-hook-'));
 const file = path.join(root, 'claude-pets', 'sessions', 'S1.json');
 
-function fire(kind, payload, id) {
+function fire(kind, payload, id, env) {
   execFileSync(process.execPath, [HOOK, kind], {
     input: JSON.stringify(Object.assign({ session_id: id || 'S1' }, payload)),
     // HOME además de LOCALAPPDATA: fuera de Windows el hook cae en ~/.local/share
-    env: Object.assign({}, process.env, { LOCALAPPDATA: root, HOME: root }),
+    env: Object.assign({}, process.env, { LOCALAPPDATA: root, HOME: root }, env || {}),
     stdio: ['pipe', 'pipe', 'pipe']
   });
 }
@@ -77,6 +77,29 @@ fire('end', {}, 'S2');
 fire('end', {});
 fire('start', {});
 check('pero empezar de cero si lo devuelve', fs.existsSync(muted), false);
+
+/* ---------- de quién es la sesión ---------- */
+
+/*
+ * Cerrar la terminal con la X no dispara SessionEnd, así que el archivo queda.
+ * Lo único que le permite al pet darse cuenta es el pid del Claude Code que lo
+ * escribió — el suyo no sirve, el hook se muere en el acto.
+ */
+function pidOf(id, env) {
+  fire('working', {}, id, env);
+  try { return JSON.parse(fs.readFileSync(path.join(root, 'claude-pets', 'sessions', id + '.json'), 'utf8')).pid; }
+  catch (e) { return 'sin archivo'; }
+}
+
+check('anota el pid del Claude Code que la abrió', pidOf('S3', { CLAUDE_PID: '4242' }), 4242);
+check('no el suyo, que se muere al salir', pidOf('S3', { CLAUDE_PID: '4242' }) === process.pid, false);
+check('sin CLAUDE_PID se lo acuerda de antes', pidOf('S3', { CLAUDE_PID: '' }), 4242);
+check('y una sesión que nunca lo tuvo se queda sin pid', pidOf('S4', { CLAUDE_PID: '' }), null);
+check('un pid que no es un número no vale', pidOf('S5', { CLAUDE_PID: 'ni ahí' }), null);
+
+fire('end', {}, 'S3');
+fire('end', {}, 'S4');
+fire('end', {}, 'S5');
 
 fire('end', {});
 check('al cerrar la sesion no queda rastro', fs.existsSync(file), false);

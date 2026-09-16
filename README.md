@@ -68,8 +68,10 @@ una esquina del escritorio y te lo dice sin que la mires.
 - **Se elige todo desde el panel**: el avatar, su paleta, la notebook sobre la
   que trabaja y el tamaño.
 - **Vive lo que dura Claude Code.** Lo abre el hook `SessionStart` y se cierra
-  solo 25 segundos después de que se va la última sesión. No arranca con
-  Windows ni queda dando vueltas.
+  solo 25 segundos después de que se va la última sesión — también si cerraste
+  la terminal con la ✕ y Claude Code no llegó a avisar: el pet se fija si el
+  proceso dueño de cada sesión sigue existiendo. No arranca con Windows ni
+  queda dando vueltas.
 - **Se configura solo.** La primera vez que lo abrís sin los hooks puestos te
   abre un panel con el paso que falta y un botón que lo hace por vos, fusionando
   en tu `settings.json` sin pisarte nada.

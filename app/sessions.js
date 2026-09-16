@@ -51,6 +51,29 @@ const QUEUE_MAX = 3;
 
 /* ---------- leer el directorio ---------- */
 
+/*
+ * ¿Sigue vivo el Claude Code que escribió esto?
+ *
+ * Cerrando la terminal con la X, o matándola, Claude Code se muere sin correr
+ * SessionEnd: nadie borra el archivo y el pet se quedaba hasta seis horas
+ * acompañando a una sesión que ya no existe — que es justo el caso en el que
+ * la última terminal que cerrás no apaga el pet.
+ *
+ * El hook anota el pid del proceso dueño de la sesión (ver app/hook.js), así
+ * que alcanza con preguntar si todavía está. La señal 0 no mata nada: pregunta.
+ *
+ * Sin pid anotado no se afirma nada: una sesión vieja, escrita por una versión
+ * anterior del hook, sigue valiendo hasta que la voltee el techo de las seis
+ * horas. Es la dirección barata del error — tarda de más en irse, no se va de
+ * más.
+ */
+function alive(rec) {
+  const pid = rec && rec.pid;
+  if (!Number.isInteger(pid) || pid <= 0) return true;
+  try { process.kill(pid, 0); return true; }
+  catch (e) { return e.code === 'EPERM'; }   // existe, pero es de otro usuario
+}
+
 function read(dir, now) {
   let names;
   try { names = fs.readdirSync(dir); } catch (e) { return []; }
@@ -61,7 +84,7 @@ function read(dir, now) {
     const file = path.join(dir, name);
     let rec;
     try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { continue; }
-    if (!rec || now - (rec.updatedAt || 0) > STALE_MS) {
+    if (!rec || now - (rec.updatedAt || 0) > STALE_MS || !alive(rec)) {
       try { fs.unlinkSync(file); } catch (e) { /* ya no está */ }
       continue;
     }
@@ -382,6 +405,7 @@ function byNewest(a, b) {
 
 module.exports = {
   read: read,
+  alive: alive,
   create: create,
   labels: labels,
   roster: roster,

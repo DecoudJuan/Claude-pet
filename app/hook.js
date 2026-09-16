@@ -113,6 +113,10 @@ function write() {
     // que Claude Code lo diga en el texto de un aviso. Es un plan B: alcanza
     // para saber QUE pasó, nunca para saber cuándo vuelve.
     limited: looksLimited(payload.message) || (prev.limited && KIND !== 'working') || false,
+    // De quién es esta sesión. Cerrar la terminal a lo bruto no dispara
+    // SessionEnd: sin esto el archivo queda seis horas y el pet se queda
+    // abierto acompañando a una sesión que ya no existe. Ver ownerPid().
+    pid: ownerPid(prev),
     startedAt: restarting ? now : (prev.startedAt || now),
     finishedAt: KIND === 'done' ? now : null,
     updatedAt: now
@@ -132,11 +136,39 @@ function write() {
   if (KIND === 'start' || KIND === 'working' || KIND === 'waiting') ensurePet();
 }
 
+/*
+ * El pid del Claude Code dueño de esta sesión.
+ *
+ * Claude Code lo exporta a todo lo que lanza, hooks incluidos, así que el hook
+ * lo lee de su propio ambiente y no hay que salir a preguntarle nada a Windows.
+ * No sirve el pid del hook ni el de su shell: los dos se mueren apenas termina
+ * de escribir este archivo. El que hay que anotar es el que dura lo que dura
+ * la terminal.
+ *
+ * Si la versión de Claude Code no lo exporta, la sesión se queda sin pid y el
+ * pet vuelve a lo de siempre: el techo de seis horas.
+ */
+function ownerPid(prev) {
+  const n = Number(process.env.CLAUDE_PID);
+  if (Number.isInteger(n) && n > 0) return n;
+  return prev && Number.isInteger(prev.pid) && prev.pid > 0 ? prev.pid : null;
+}
+
 // ¿Hay otra sesión de Claude Code viva ahora mismo? Se mira lo mismo que mira
 // el pet — el directorio de estado — y con el mismo techo de 6 h, para que una
 // sesión que se murió sin avisar (un reinicio, un cierre a lo bruto) no deje
 // el pet silenciado para siempre.
 const STALE_MS = 6 * 60 * 60 * 1000;
+
+// La misma pregunta que se hace el pet en app/sessions.js, escrita dos veces a
+// propósito: el hook no importa nada de la app — tiene que poder correr desde
+// cualquier lado, aunque no haya un pet al lado suyo.
+function ownerAlive(rec) {
+  const pid = rec && rec.pid;
+  if (!Number.isInteger(pid) || pid <= 0) return true;
+  try { process.kill(pid, 0); return true; }
+  catch (e) { return e.code === 'EPERM'; }   // vive, pero no es nuestro
+}
 
 function othersAlive(self) {
   let names;
@@ -146,7 +178,7 @@ function othersAlive(self) {
     if (!name.endsWith('.json') || name === self + '.json') return false;
     try {
       const rec = JSON.parse(fs.readFileSync(path.join(DIR, name), 'utf8'));
-      return now - (rec.updatedAt || 0) < STALE_MS;
+      return now - (rec.updatedAt || 0) < STALE_MS && ownerAlive(rec);
     } catch (e) { return false; }
   });
 }
