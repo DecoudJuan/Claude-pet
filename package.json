@@ -1,6 +1,6 @@
 {
   "name": "claude-pet",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "private": true,
   "description": "Una mascota de escritorio que refleja el estado de Claude Code.",
   "main": "app/main.js",
