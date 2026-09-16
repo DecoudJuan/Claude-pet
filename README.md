@@ -99,10 +99,10 @@ hueco si no, y desde cuándo labura.
 
 ```
 SESIONES
-● darwin-errors                 te espera
+● api-pagos                     te espera
 ● claude-pets #1               1 min 35 s
 ● claude-pets #2                      8 s
-○ prompt-me                     en reposo
+○ sitio                         en reposo
 ```
 
 Una sesión que se queda sin tokens no duerme al pet si otra está laburando —
