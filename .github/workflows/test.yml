@@ -1,0 +1,41 @@
+name: test
+
+# Hasta ahora los tests corrían cuando alguien se acordaba, y el release se
+# armaba igual con la suite en rojo. Desde que core/rig.js es el armazón que
+# comparten los doce avatares, romperlo los rompe a todos de una: conviene
+# enterarse en el push y no en el instalador.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    # En los tres, porque la mitad de lo que probamos son rutas y el hook cae en
+    # LOCALAPPDATA o en ~/.local/share según dónde esté parado. Un test que
+    # sólo corre en Windows no cubre el .deb que publicamos igual.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Los tests no necesitan Electron: todo lo que prueban corre en node
+      # pelado, que es justamente por qué están escritos así. Bajar los 100 MB
+      # del binario en tres runners para no usarlo sería pagar por nada.
+      - name: Instalar sin el binario de Electron
+        run: npm ci
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+
+      - run: npm test
