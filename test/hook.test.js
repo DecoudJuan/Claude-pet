@@ -20,9 +20,9 @@ const HOOK = path.join(__dirname, '..', 'app', 'hook.js');
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pet-hook-'));
 const file = path.join(root, 'claude-pets', 'sessions', 'S1.json');
 
-function fire(kind, payload) {
+function fire(kind, payload, id) {
   execFileSync(process.execPath, [HOOK, kind], {
-    input: JSON.stringify(Object.assign({ session_id: 'S1' }, payload)),
+    input: JSON.stringify(Object.assign({ session_id: id || 'S1' }, payload)),
     // HOME además de LOCALAPPDATA: fuera de Windows el hook cae en ~/.local/share
     env: Object.assign({}, process.env, { LOCALAPPDATA: root, HOME: root }),
     stdio: ['pipe', 'pipe', 'pipe']
@@ -61,6 +61,22 @@ const before = rec().updatedAt;
 fire('waiting', { message: 'Claude is waiting for your input' });
 check('el codazo no interrumpe un turno vivo', state(), 'working');
 check('ni le corre el updatedAt', rec().updatedAt, before);
+
+/* ---------- cerrarlo a mano tiene que aguantar ---------- */
+
+// Lo cerrás por el menú y eso deja la marca. Antes cualquier SessionStart la
+// borraba: abrías otra pestaña y el pet volvía, que es desobedecer.
+const muted = path.join(root, 'claude-pets', 'muted');
+fs.writeFileSync(muted, '');
+fire('start', {}, 'S2');
+check('otra terminal no resucita el pet silenciado', fs.existsSync(muted), true);
+
+// Lo que sí lo devuelve es empezar de cero: sin ninguna otra sesión viva, una
+// sesión nueva es un arranque limpio y el silencio no se hereda.
+fire('end', {}, 'S2');
+fire('end', {});
+fire('start', {});
+check('pero empezar de cero si lo devuelve', fs.existsSync(muted), false);
 
 fire('end', {});
 check('al cerrar la sesion no queda rastro', fs.existsSync(file), false);

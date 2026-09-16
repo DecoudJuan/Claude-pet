@@ -70,8 +70,24 @@ una esquina del escritorio y te lo dice sin que la mires.
   solo 25 segundos después de que se va la última sesión. No arranca con
   Windows ni queda dando vueltas.
 
-Con varias sesiones abiertas alcanza con que una esté laburando para que
-teclee; avisa cuando se apaga la última.
+### Con varias sesiones abiertas
+
+Es el caso normal — dos o tres terminales a la vez — y el pet es uno solo, así
+que tiene que resumir sin borrar lo que importa. Separa dos cosas:
+
+- **La pose es del conjunto.** Si alguna espera, el pet espera; si alguna
+  labura, teclea. Manda la que no puede avanzar sola: un permiso sin contestar
+  le gana a cualquier cosa, y de dos permisos abiertos habla el que espera hace
+  más rato — no el que quedó primero en el directorio.
+- **El aviso es de una.** «Terminó» dice **cuál** terminó, cuánto tardó y
+  cuántas siguen laburando. Sale aunque las otras sigan: el avatar teclea y el
+  globo cuenta el final ajeno.
+
+Dos terminales en el mismo repo se distinguen por la rama, y si también es la
+misma, por orden de antigüedad (`claude-pets #1`, `claude-pets #2`).
+
+Una sesión que se queda sin tokens no duerme al pet si otra está laburando —
+con dos cuentas abiertas lo normal es justamente eso.
 
 ## Cómo se entera
 
@@ -84,8 +100,10 @@ Claude Code ──hook──> %LOCALAPPDATA%\claude-pets\sessions\<session_id>.j
 ```
 
 Cada evento escribe un `state` (`working`, `waiting`, `idle`) más el `cwd` y
-los tiempos. El proceso principal poll­ea ese directorio cada 400 ms, proyecta
-todas las sesiones a un único estado y se lo manda a la ventana.
+los tiempos. El proceso principal poll­ea ese directorio cada 600 ms y le pasa
+lo que encuentra a `app/sessions.js`, que proyecta las N sesiones a una pose y
+un aviso. Esa proyección vive fuera de Electron a propósito: es la regla que
+más se rompe y así se puede testear sin levantar la app.
 
 `hook.js` sale siempre con código 0 y sin escribir nada en stdout, incluso si
 falla. El pet es decorativo: no tiene por qué romperte un turno.
@@ -235,7 +253,7 @@ Claude Code lo menciona en el texto de un aviso, se duerme igual pero muestra
 | **Click** sin arrastrar | Lo tocás y salta. |
 | **Hover sobre el dibujo** | Aparecen dos botones apilados al costado. |
 | **⋯** | Panel de ajustes: tamaño, avatar, paleta y notebook. |
-| **✕** | Lo cierra. Vuelve en la próxima sesión, no en el próximo prompt. |
+| **✕** | Lo cierra. Vuelve cuando arranques de cero, no en el próximo prompt ni porque abras otra terminal al lado. |
 | **Botón derecho** | Menú nativo: volver abajo a la izquierda, sacar el «siempre encima», abrir la carpeta de estado, salir. |
 
 Los botones van a la izquierda y saltan a la derecha si la ventana quedó pegada

@@ -12,7 +12,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const quota = require('./quota');
-const turn = require('./turn');
+const sessions = require('./sessions');
 const greeting = require('../core/greeting');
 
 // El panel de ajustes mide siempre lo mismo, así que la ventana no puede ser
@@ -46,14 +46,6 @@ const APP_PATH = path.join(ROOT, 'app-path.json');
 const AUTO = process.argv.includes('--auto');
 const QUIT_AFTER_MS = 25000;   // gracia desde que se va la última sesión
 const BOOT_GRACE_MS = 30000;   // no cerrarse apenas arranca
-// Cuánto cabecea el aviso de «te espera». El aviso en sí no vence — dura lo
-// que dure el turno frenado; esto es sólo hasta cuándo insiste.
-const WAITING_TTL_MS = 40000;
-// Si cancelás un turno con Ctrl+C puede no dispararse ningún hook, y la sesión
-// se quedaría en "working" para siempre: el avatar tecleando solo. Este techo
-// es la garantía de que eso no pasa. Generoso a propósito — un turno largo de
-// verdad tiene que poder durar.
-const WORKING_TTL_MS = 15 * 60 * 1000;
 const bootAt = Date.now();
 let emptySince = 0;
 
@@ -106,137 +98,18 @@ function onScreen(pos, size) {
 
 /* ---------- estado de las sesiones de Claude Code ---------- */
 
-const STALE_MS = 6 * 60 * 60 * 1000;
-
-function readSessions() {
-  let names;
-  try { names = fs.readdirSync(STATE_DIR); } catch (e) { return []; }
-  const now = Date.now();
-  const out = [];
-  for (const name of names) {
-    if (!name.endsWith('.json')) continue;
-    const file = path.join(STATE_DIR, name);
-    let rec;
-    try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { continue; }
-    if (!rec || now - (rec.updatedAt || 0) > STALE_MS) {
-      try { fs.unlinkSync(file); } catch (e) { /* ya no está */ }
-      continue;
-    }
-    out.push(rec);
-  }
-  return out;
-}
-
-let lastPhase = 'idle';
-let doneUntil = 0;
-let doneDetail = null;
-
-function project(sessions) {
-  const now = Date.now();
-
-  // Primero que todo: sin tokens no hay nada que hacer. Si no, el avatar se
-  // queda tecleando delante de una terminal que no puede avanzar — que es
-  // justo el caso en el que más molesta.
-  // Con statusline sabemos que se acabaron Y cuándo vuelven. Sin statusline,
-  // como mucho sabemos que se acabaron — y entonces no se inventa una hora.
-  const out = quota.exhausted(now);
-  const flagged = sessions.some(function (s) { return s.limited; });
-  if (out || flagged) {
-    lastPhase = 'sleeping';
-    doneUntil = 0;
-    return {
-      phase: 'sleeping',
-      window: out ? out.window : null,
-      resetsAt: out ? out.resetsAt : null,
-      account: out ? out.account : null
-    };
-  }
-
-  // Cuando contestás un pedido de permiso no se dispara ningún hook hasta que
-  // termina el turno: el archivo sigue diciendo "waiting" mientras el trabajo
-  // ya se reanudó. Lo que separa haberlo contestado de haberlo dejado ahí es
-  // el transcript — contestar hace trabajo y el trabajo se escribe.
-  //
-  // Mientras no aparezca esa prueba, el turno sigue frenado y el pet lo sigue
-  // diciendo. No vence: un turno trabado es el caso que más caro sale, y
-  // callarse a los 40 s es callarse justo cuando te fuiste a hacer otra cosa.
-  function answered(s) {
-    return turn.movedSince(s, s.updatedAt);
-  }
-  const waiting = sessions.find(function (s) {
-    if (s.state !== 'waiting') return false;
-    // Sin transcript no hay con qué desmentirlo, y un aviso que no se puede
-    // dar por contestado no se apagaría nunca. Ahí vale sólo la ventana corta.
-    if (!s.transcript) return now - (s.updatedAt || 0) < WAITING_TTL_MS;
-    return !answered(s);
-  });
-  const working = sessions.filter(function (s) {
-    if (now - (s.updatedAt || 0) >= WORKING_TTL_MS) return false;
-    // Decir que trabaja no alcanza: si cortaste el turno con Ctrl+C ningún hook
-    // lo avisa, así que se confirma contra el latido del transcript.
-    return (s.state === 'working' ||
-            (s.state === 'waiting' && answered(s))) && turn.isActive(s, now);
-  });
-
-  if (waiting) {
-    lastPhase = 'waiting';
-    doneUntil = 0;
-    return {
-      phase: 'waiting',
-      project: label(waiting),
-      message: waiting.message || '',
-      tool: waiting.lastTool || '',
-      // El aviso queda; lo que se calma es el cabeceo. Insistir para siempre
-      // deja de ser un aviso y pasa a ser ruido de fondo, que se ignora igual.
-      insist: now - (waiting.updatedAt || 0) < WAITING_TTL_MS
-    };
-  }
-
-  if (working.length) {
-    lastPhase = 'working';
-    doneUntil = 0;
-    const lead = working.sort(function (a, b) { return b.updatedAt - a.updatedAt; })[0];
-    return {
-      phase: 'working',
-      project: label(lead),
-      tool: lead.lastTool || '',
-      since: lead.startedAt || lead.updatedAt,
-      count: working.length
-    };
-  }
-
-  // nadie trabajando: si veníamos de trabajar, avisamos. Volver de dormir no
-  // cuenta — no terminó nada, se le devolvieron los tokens.
-  if (lastPhase === 'working' || lastPhase === 'waiting') {
-    const justDone = sessions
-      .filter(function (s) { return s.finishedAt; })
-      .sort(function (a, b) { return b.finishedAt - a.finishedAt; })[0];
-    doneUntil = now + 20000;
-    doneDetail = justDone
-      ? { project: label(justDone), took: Math.max(0, (justDone.finishedAt - (justDone.startedAt || justDone.finishedAt))) }
-      : { project: '', took: 0 };
-    lastPhase = 'done';
-  }
-
-  if (now < doneUntil) {
-    return Object.assign({ phase: 'done' }, doneDetail);
-  }
-
-  lastPhase = 'idle';
-  return { phase: 'idle' };
-}
-
-function label(rec) {
-  if (!rec || !rec.cwd) return '';
-  return path.basename(rec.cwd);
-}
+// Quién espera, quién labura y cuál acaba de terminar vive en app/sessions.js,
+// fuera de Electron, para que se pueda testear de verdad. Acá queda sólo el
+// pedazo que es de la app: cada cuánto se mira y a quién se le manda.
+const scene = sessions.create();
 
 let lastSent = '';
 function pushState() {
   if (!win || win.isDestroyed()) return;
 
-  const sessions = readSessions();
-  const s = project(sessions);
+  const now = Date.now();
+  const open = sessions.read(STATE_DIR, now);
+  const s = scene.project(open, now, quota.exhausted(now));
 
   const key = JSON.stringify(s);
   if (key !== lastSent) {
@@ -244,18 +117,18 @@ function pushState() {
     win.webContents.send('state', s);
   }
 
-  if (AUTO) maybeQuit(sessions.length);
+  if (AUTO) maybeQuit(open.length, now);
 }
 
 // Sin sesiones de Claude Code el pet no tiene nada que mostrar: se va solo,
 // pero recién después de que el globo de «terminó» haya tenido su momento.
-function maybeQuit(count) {
-  const now = Date.now();
+function maybeQuit(count, now) {
+  now = now || Date.now();
   if (count) { emptySince = 0; return; }
   if (!emptySince) { emptySince = now; return; }
   if (now - emptySince < QUIT_AFTER_MS) return;
   if (now - bootAt < BOOT_GRACE_MS) return;
-  if (now < doneUntil) return;
+  if (scene.talking(now)) return;
   farewell();
 }
 

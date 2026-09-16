@@ -309,9 +309,14 @@
     phase = s.phase;
     if (!avatar) return;
 
+    // La pose es del conjunto y el aviso es de una sesión: mientras una labura,
+    // otra puede haber terminado. Por eso el globo se resuelve aparte y el
+    // avatar sigue tecleando mientras cuenta que la otra terminó.
     if (s.phase === 'working') {
       if (was !== 'working') { swap = 0; swapAt = Date.now(); }
-      hush();
+      bubble.classList.remove('insist');
+      if (s.notice) done(s.notice);
+      else hush();
       return;
     }
 
@@ -338,24 +343,33 @@
     if (s.phase === 'waiting') {
       pose('waiting');
       // el mensaje del hook dice QUÉ pide; sin él sólo podríamos decir "te espera"
-      say(
-        s.message || 'Necesita que le contestes.',
-        s.project ? [{ text: 'en ' }, { text: s.project, strong: true }]
-                  : [{ text: 'claude code' }]
-      );
+      var espera = s.project ? [{ text: 'en ' }, { text: s.project, strong: true }]
+                             : [{ text: 'claude code' }];
+      // Contestar la que el globo nombra y que aparezca una segunda sin
+      // haberla visto venir es peor que saber desde el principio que estaba.
+      if (s.others) espera.push({ text: ' · y ' + s.others + ' más' });
+      say(s.message || 'Necesita que le contestes.', espera);
       // deja de cabecear a los 40 s, pero el globo se queda: el turno sigue
       // frenado hasta que contestes, y eso no deja de ser cierto por esperar
       if (s.insist) bubble.classList.add('insist');
-    } else if (s.phase === 'done') {
+    } else if (s.notice) {
       if (!greeting) avatar.poke();   // el saludo tiene su propia animación
-      var parts = s.project ? [{ text: s.project, strong: true }]
-                            : [{ text: 'claude code' }];
-      if (s.took) parts.push({ text: ' · ' + human(s.took) });
-      say('Terminó.', parts);
+      done(s.notice);
     } else {
       hush();
     }
   });
+
+  // «Terminó» tiene que decir CUÁL terminó y si queda alguien laburando. Con
+  // una sola sesión daba igual; con tres, «terminó» a secas se lee como
+  // «terminó todo», que es exactamente lo que no pasó.
+  function done(n) {
+    var parts = n.project ? [{ text: n.project, strong: true }]
+                          : [{ text: 'claude code' }];
+    if (n.took) parts.push({ text: ' · ' + human(n.took) });
+    if (n.rest) parts.push({ text: ' · sigue' + (n.rest > 1 ? 'n ' + n.rest : ' 1') });
+    say('Terminó.', parts);
+  }
 
   // mientras trabaja alterna entre teclear (4-9 s) y levantar la vista (2-4 s)
   setInterval(function () {
