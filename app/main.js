@@ -413,8 +413,15 @@ ipcMain.on('reveal-settings', function () {
  * encabezado de app/update.js: qué pide, qué no manda y las tres formas de
  * apagarlo.
  *
- * El aviso se guarda por versión: si ya te dijimos que salió la 1.4.0, no te lo
- * repetimos todos los días. La próxima vez que hable va a ser por la 1.5.0.
+ * Una vez por versión, y no vuelve a insistir: si ya te dijimos que salió la
+ * 1.4.0, la próxima vez que hable va a ser por la 1.5.0.
+ *
+ * Eso no alcanzaba cuando el globo duraba doce segundos en blanco y negro:
+ * avisar una única vez algo que se puede no ver es no avisar. Pero el arreglo
+ * era que SE VEA, no que insista. Ahora va en color de acento, cabecea, el
+ * avatar pega el salto y dura treinta segundos; con eso, repetirlo todos los
+ * días es hinchar al pedo. Un adorno que te recuerda a diario que no lo
+ * actualizaste es peor que uno viejo.
  */
 function checkUpdate(force) {
   const conf = readConf();
@@ -428,6 +435,8 @@ function checkUpdate(force) {
   }, function (found, asked) {
     if (asked) writeConf({ updateCheckedAt: Date.now() });
     if (!found) return;
+    // Ya te lo dijimos. `force` es el que acaba de prender el chequeo desde el
+    // menú: ése quiere saber ahora, aunque se lo hayamos dicho antes.
     if (readConf().updateSeen === found.version && !force) return;
     writeConf({ updateSeen: found.version });
     if (win && !win.isDestroyed()) win.webContents.send('update', found);

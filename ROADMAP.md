@@ -215,6 +215,16 @@ que se rompió.
 - **Y se apaga de verdad.** Es la primera vez que el proyecto toca la red, y
   `SECURITY.md` decía «ni una petición». Apagado son cero llamados, no un
   llamado descartado: hay un test que lo verifica contando invocaciones.
+- **La primera versión del aviso no servía, y se vio recién en pantalla.** Doce
+  segundos de globo blanco y negro, una sola vez por versión y para siempre: si
+  en esos doce segundos no estabas mirando la esquina, te enterabas nunca. Y el
+  globo decía «clic acá para bajarla» con el clic muerto — la ventana sólo se
+  vuelve interactiva sobre lo pintado del avatar, así que ahí seguía siendo
+  click-through y el clic se lo comía la ventana de atrás. El arreglo fue que SE
+  VEA, no que insista: color de acento, cabeceo, el avatar pega el salto,
+  treinta segundos y su propia ✕ — y se sigue diciendo una sola vez por versión.
+  El globo de siempre sigue sin atrapar el mouse: es un cartel que se lee, y
+  está arriba del avatar tapando un pedazo grande de escritorio.
 
 ### 18. Tests y CI
 

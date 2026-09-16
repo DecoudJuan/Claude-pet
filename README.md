@@ -73,8 +73,9 @@ una esquina del escritorio y te lo dice sin que la mires.
 - **Se configura solo.** La primera vez que lo abrís sin los hooks puestos te
   abre un panel con el paso que falta y un botón que lo hace por vos, fusionando
   en tu `settings.json` sin pisarte nada.
-- **Te avisa si salió una versión nueva.** Una vez por día, una sola vez por
-  versión, y se apaga desde el menú.
+- **Te avisa si salió una versión nueva.** Una sola vez por versión, con un
+  globo que se puede tocar para ir a bajarla y cerrar con la ✕. Se apaga desde
+  el panel o desde el menú.
 
 ### Con varias sesiones abiertas
 
@@ -307,9 +308,15 @@ Claude Code lo menciona en el texto de un aviso, se duerme igual pero muestra
 ## Versiones nuevas
 
 El pet mira una vez por día si salió una versión nueva y, si hay, te lo dice en
-el globo. Un click y te abre la página de releases en el navegador. **No
-descarga ni instala nada**, y lo dice una sola vez por versión: si ya te avisó
-de la 1.4.0, la próxima vez que abra la boca va a ser por la 1.5.0.
+el globo: en color de acento, cabeceando, y con el avatar pegando un salto para
+que se note de reojo. Un click en el globo te abre la página de releases en el
+navegador, y la ✕ lo cierra sin ir a ningún lado. **No descarga ni instala
+nada.**
+
+**Lo dice una sola vez por versión.** Si ya te avisó de la 1.4.0, la próxima vez
+que abra la boca va a ser por la 1.5.0. Un adorno que te recuerda todos los días
+que no lo actualizaste es peor que uno viejo — por eso el aviso se hace ver en
+lugar de insistir.
 
 Es lo único que este proyecto manda a la red. Un `GET` a la API pública de
 GitHub, sin identificadores, sin telemetría y sin mandar ni siquiera qué versión
@@ -336,6 +343,7 @@ Apagado son **cero pedidos**, no un pedido que se descarta.
 |---|---|
 | **Arrastrar** | Lo llevás a cualquier lado. Se acuerda de dónde lo dejaste. |
 | **Click** sin arrastrar | Lo tocás y salta. |
+| **Click en el globo naranja** | Sólo el aviso de versión nueva: te abre la página de releases. Los otros globos no atrapan el mouse, para no taparte clicks del escritorio. |
 | **Hover sobre el dibujo** | Aparecen tres botones apilados al costado. |
 | **☰** | Panel de sesiones: todas las abiertas, en qué anda cada una y desde cuándo. |
 | **⋯** | Panel de ajustes: tamaño, avatar, paleta y notebook. |

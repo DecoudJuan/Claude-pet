@@ -388,7 +388,14 @@
   window.addEventListener('mousemove', function (e) {
     if (!panel.hidden || down) { setInteractive(true); hot(true); return; }
     var el = document.elementFromPoint(e.clientX, e.clientY);
-    var over = !!(el && (el.closest('#chrome') || el.closest('#mascot')));
+    // El globo de siempre NO atrapa el mouse: es un cartel que se lee, y está
+    // arriba del avatar tapando un pedazo grande de escritorio. El del aviso de
+    // versión sí, porque es lo único en lo que se puede hacer clic — sin esto
+    // la ventana sigue siendo click-through ahí y el clic se lo come la ventana
+    // que haya atrás.
+    var b = el && el.closest('#bubble');
+    var over = !!(el && (el.closest('#chrome') || el.closest('#mascot') ||
+                         (b && b.classList.contains('news'))));
     setInteractive(over);
     hot(over);
   });
@@ -417,6 +424,9 @@
     // estado cuando cambia, así que descartarlo sería perderlo hasta el
     // siguiente cambio — justo el aviso de «te espera», que es el que importa.
     if (greeting) { pending = { title: title, parts: parts, ms: ms }; return; }
+    // El aviso de versión viste distinto al globo de siempre. Se saca acá para
+    // que el globo siguiente —«terminó», «te espera»— no herede el color.
+    bubble.classList.remove('news', 'insist');
     bTitle.textContent = title;
     bMeta.textContent = '';
     (parts || []).forEach(function (part) {
@@ -432,7 +442,7 @@
   function hush() {
     pending = null;
     clearTimeout(bubbleTimer);
-    bubble.classList.remove('show');
+    bubble.classList.remove('show', 'news', 'insist');
   }
 
   // 19:20, con el formato de reloj del sistema
@@ -506,13 +516,23 @@
   /* ---------- salió una versión nueva ---------- */
 
   /*
-   * Lo dice una vez por versión y no vuelve a insistir: si ya te avisamos de la
-   * 1.4.0, la próxima vez que hable va a ser por la 1.5.0. Un adorno que te
-   * recuerda todos los días que no lo actualizaste es peor que uno viejo.
+   * La primera versión de esto decía el aviso una vez por versión, doce
+   * segundos, y no volvía nunca. Probándolo quedó claro que eso es lo mismo que
+   * no avisar: si en esos doce segundos no estabas mirando la esquina, te
+   * enterabas de la versión nueva jamás.
    *
-   * Y no se dice si el panel está abierto o si hay algo que contar de Claude
-   * Code: el globo es para lo que está pasando en tu turno. Una versión nueva
-   * puede esperar a que el pet no tenga nada mejor que decir.
+   * Ahora insiste, pero con techo. El chequeo ya está limitado a uno por día,
+   * así que colgarse de él da la cadencia sola: como mucho un globo por día
+   * hasta que actualices. Eso es un recordatorio; todos los arranques sería
+   * hostigamiento, y el pet arranca cada vez que abrís una terminal.
+   *
+   * Y se hace ver. El globo va en color de acento —no es un estado de Claude
+   * Code, es otra cosa—, cabecea como el de «te espera» y el avatar pega el
+   * salto, que es el gesto que este proyecto usa para «mirame».
+   *
+   * Lo que no cambió: no se dice con el panel abierto ni si hay algo que contar
+   * del turno. Una versión nueva puede esperar a que el pet no tenga nada mejor
+   * que decir.
    */
   var pendingUpdate = null;
 
@@ -526,15 +546,41 @@
     if (!pendingUpdate) return;
     if (!panel.hidden) return;
     if (phase !== 'idle' && phase !== 'sleeping') return;   // hay algo más importante
+    // Saludando, el globo no sale: se reintenta en vez de perderse.
+    if (greeting) { setTimeout(tellUpdate, 1200); return; }
     var u = pendingUpdate;
     pendingUpdate = null;
-    say('Salió la ' + u.version, [{ text: 'clic acá para bajarla', strong: true }], 12000);
-    bubble.addEventListener('click', function go() {
-      bubble.removeEventListener('click', go);
-      window.pet.openReleases(u.url);
-      hush();
-    });
+
+    newsUrl = u.url;
+    say('Salió la ' + u.version, [{ text: 'clic acá para bajarla', strong: true }], 30000);
+    bubble.classList.add('news', 'insist');
+    // El salto es el mismo gesto que usa «terminó»: cuesta nada y es lo que
+    // hace que se note de reojo.
+    if (avatar && !greeting) avatar.poke();
   }
+
+  /*
+   * Un solo handler para siempre, en vez de uno por aviso. Colgar el listener
+   * adentro de tellUpdate y sacarlo al hacer clic dejaba uno pegado cada vez que
+   * el globo se vencía sin que lo tocaras — y al segundo día abría la página de
+   * releases dos veces.
+   */
+  var newsUrl = null;
+
+  bubble.addEventListener('click', function () {
+    if (!newsUrl || !bubble.classList.contains('news')) return;
+    window.pet.openReleases(newsUrl);
+    newsUrl = null;
+    hush();
+  });
+
+  // La ✕ del globo: cerrarlo sin ir a bajar nada. Va adentro del globo, así que
+  // hay que frenar el clic antes de que llegue al globo y abra el navegador.
+  document.getElementById('btn-bubble-close').addEventListener('click', function (e) {
+    e.stopPropagation();
+    newsUrl = null;
+    hush();
+  });
 
   /* ---------- estados ---------- */
 

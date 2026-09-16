@@ -96,6 +96,41 @@
   }
   #bubble.show.insist { animation: bubble-insist 3.4s ease-in-out infinite; }
 
+  /* El aviso de versión nueva no es un estado de Claude Code: es el pet
+     hablando de sí mismo, y una vez por día como mucho. Se viste distinto para
+     que no se confunda con «terminó» ni con «te espera» — borde de acento y el
+     título en acento — y sobre todo para que se note, que era el problema: la
+     primera versión duraba doce segundos de blanco y negro y se la perdía
+     cualquiera que no estuviera mirando la esquina justo. */
+  #bubble.news { border-color: var(--accent); padding-right: 24px; cursor: pointer; }
+  #bubble.news .title { color: var(--accent); }
+  /* La colita son dos triángulos y el de atrás hace de borde: si no se tiñe
+     también, el globo queda naranja con una punta negra. */
+  #bubble.news::before { border-top-color: var(--accent); }
+
+  /* La ✕ del globo. Sólo la tiene el aviso de versión: los otros globos cuentan
+     lo que está pasando en tu turno y se van solos cuando deja de pasar. Éste
+     es el único que interrumpe, así que es el único que hay que poder callar.
+     El padding-right de arriba es el lugar que se le hace. */
+  #btn-bubble-close {
+    display: none;
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 15px;
+    height: 15px;
+    padding: 0;
+    place-items: center;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  #bubble.news #btn-bubble-close { display: grid; }
+  #btn-bubble-close:hover { background: var(--accent); color: var(--bg); }
+  #btn-bubble-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
   /* la colita, en dos triángulos para que conserve el borde negro */
   #bubble::before, #bubble::after,
   #greet::before, #greet::after {
@@ -513,6 +548,11 @@
 
 <div id="stage">
   <div id="bubble" role="status" aria-live="polite">
+    <button id="btn-bubble-close" type="button" title="Cerrar" aria-label="Cerrar">
+      <svg viewBox="0 0 16 16" width="8" height="8" aria-hidden="true">
+        <path d="M4 4 L12 12 M12 4 L4 12" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" fill="none"/>
+      </svg>
+    </button>
     <div class="title"></div>
     <div class="meta"></div>
   </div>

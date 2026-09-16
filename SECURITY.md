@@ -49,7 +49,8 @@ la abrieras en el navegador.
 
 **Cuándo.** Treinta segundos después de abrir la ventana, y como mucho una vez
 cada 24 h. Si el pet se cierra antes de esos 30 s —una sesión corta— no llega a
-preguntar nada.
+preguntar nada. El aviso en pantalla sale una sola vez por versión, aunque el
+chequeo se repita.
 
 **Se ve la primera vez.** Viene prendido, pero el check está a la vista en el
 panel de bienvenida —abajo de los botones, ya marcado— así que se puede apagar
