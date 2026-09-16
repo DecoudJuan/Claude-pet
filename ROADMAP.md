@@ -160,14 +160,76 @@ que se rompió.
   actualizar a la última los deja en cero. Es la dependencia que define la
   superficie de ataque del proyecto.
 
+### 14. Doce mascotas y el armazón compartido
+
+- **De tres a doce.** A pingüino, nutria y oso se sumaron cangrejo, hámster,
+  topo, ratita, pulpo, gato, búho, murciélago y una taza de café. Tres de ellos
+  probaron que el contrato daba para más de lo previsto: el pulpo teclea con
+  cuatro brazos en contratiempo, la taza no es un animal —el sistema nunca pidió
+  un bicho— y apaga el vapor cuando no hay tokens, y el murciélago se envuelve
+  en las alas para dormir.
+- **`core/rig.js`.** Eran 250 de las ~490 líneas de cada avatar, escritas una
+  vez por avatar: el bucle, la mirada, el parpadeo, el tecleo, entrar y salir.
+  Un avatar nuevo son ahora 130 a 180 líneas de dibujo.
+
+### 15. Varias sesiones, contadas de verdad
+
+- **`app/sessions.js`.** La proyección de N sesiones a una escena, fuera de
+  Electron. El test que la cubría copiaba a mano los selectores de `main.js` y
+  avisaba en un comentario que era un espejo; ahora usa los de verdad.
+- **La pose es del conjunto y el aviso es de una.** La sesión que terminaba
+  mientras otra seguía laburando no lo anunciaba nunca.
+- **El panel de sesiones**: todas las abiertas, en qué anda cada una y desde
+  cuándo.
+
+### 16. El paso que falta
+
+- **El problema no era técnico.** El que bajaba el `.exe` tenía un pingüino que
+  no se enteraba de nada, y la única forma de resolverlo era saber que los hooks
+  existían, encontrar `settings.json` y fusionar JSON a mano. Mucha gente
+  terminaba pidiéndole a Claude que se lo instalara — que funciona, pero es una
+  respuesta rara para un adorno.
+- **Ahora el pet lo pregunta solo.** Sin los hooks puestos abre un panel con el
+  paso que falta y un botón que lo hace. `app/setup.js` fusiona: deja backup, no
+  pisa hooks ajenos, no toca un `statusLine` propio —lo envuelve y se lo
+  delega— y aborta si el JSON está roto, porque pisarlo sería borrar a ciegas.
+- **Reconocerse por la forma y no por la ruta.** Instalación movida de una copia
+  del repo a un `.exe`: el bloque viejo no coincidía con la ruta nueva y
+  quedaban los dos puestos, disparando todo dos veces. Ahora también se reconoce
+  la forma del comando.
+- **Los paneles se cierran solos.** Abiertos de un click y abandonados, se
+  quedaban tapando media ventana. A los tres segundos sin que pases por encima,
+  fade y afuera. El de *Falta un paso* tiene su ✕ en vez de eso: no es una
+  consulta de pasada.
+
+### 17. Avisar que salió una versión nueva
+
+- **Estabas en la 1.0.0 y no lo sabías.** El release se publica en GitHub desde
+  la 1.0.0, pero nada en la app lo miraba: la única forma de enterarse era ir a
+  buscarlo.
+- **Se eligió el camino barato a propósito.** `electron-updater` sólo sirve en
+  Windows y en el AppImage —el `.deb` no soporta auto-update y macOS necesita
+  firma—, así que el chequeo simple había que escribirlo igual para dos de los
+  cinco canales. Un solo camino de código, cero dependencias nuevas, y funciona
+  en los cinco.
+- **Y se apaga de verdad.** Es la primera vez que el proyecto toca la red, y
+  `SECURITY.md` decía «ni una petición». Apagado son cero llamados, no un
+  llamado descartado: hay un test que lo verifica contando invocaciones.
+
+### 18. Tests y CI
+
+- **La suite corría cuando alguien se acordaba.** Desde que `core/rig.js` es el
+  armazón de los doce avatares, romperlo los rompe a todos de una. Ahora corre
+  en cada push, en los tres sistemas, sin bajar el binario de Electron.
+- **Tres archivos nuevos**, y los dos primeros cubren lo que más caro sale
+  equivocar: `setup.test.js` (lo que NO hay que pisar del settings.json ajeno),
+  `update.test.js` (que 1.10.0 sea mayor que 1.9.0, y que apagado sean cero
+  pedidos) y `quota.test.js` (un archivo que escribe otro proceso y puede llegar
+  viejo, a medio escribir o con formas imprevistas).
+
 ---
 
 ## Falta
-
-### Más avatares
-
-El sistema está listo, documentado y con skills que lo enseñan, pero por ahora
-hay un avatar solo. El pingüino es la prueba de que el contrato alcanza.
 
 ### Ideas sueltas
 
@@ -175,4 +237,9 @@ hay un avatar solo. El pingüino es la prueba de que el contrato alcanza.
   `tool_name`; es sumar el evento sabiendo lo que cuesta en procesos.
 - Un desplegable propio en el panel: el del `<select>` lo dibuja el sistema
   operativo y no sigue el estilo de la ventana.
-- Contador de sesiones cuando hay más de una laburando.
+- **Firmar los instaladores.** Hoy Windows muestra SmartScreen y macOS
+  Gatekeeper a todo el que los baje. Es plata —99 USD al año de Apple, unos 200
+  de Windows— y es la barrera número uno para el que no te conoce.
+- **Auto-update de verdad**, si alguna vez hay firma: la mitad del trabajo
+  —comparar versiones, el interruptor, la política de no molestar— ya está
+  hecha en `app/update.js`.

@@ -13,6 +13,8 @@ const fs = require('fs');
 const os = require('os');
 const quota = require('./quota');
 const sessions = require('./sessions');
+const setup = require('./setup');
+const update = require('./update');
 const greeting = require('../core/greeting');
 
 // El panel de ajustes mide siempre lo mismo, así que la ventana no puede ser
@@ -248,10 +250,22 @@ function createWindow() {
       avatar: c.avatar || null,
       palette: c.palette || null,
       device: c.device || null,
-      side: sideFor(win.getBounds())
+      side: sideFor(win.getBounds()),
+      updates: update.enabled(c),
+      // Con la variable de ambiente puesta el interruptor no se puede mover: la
+      // decisión la tomó quien lanzó el proceso, no quien mira la ventana.
+      updatesLocked: !!process.env.CLAUDE_PET_NO_UPDATE_CHECK,
+      version: app.getVersion()
     });
     lastSent = '';
     pushState();
+    pushSetup();
+
+    // El chequeo no va en el arranque: el pet aparece cuando abrís una terminal,
+    // que es cuando la máquina está haciendo otras cosas. Treinta segundos
+    // después no se lo lleva nadie por delante, y si el pet se cerró antes —
+    // una sesión corta — directamente no llegó a preguntar.
+    setTimeout(function () { checkUpdate(false); }, 30000).unref();
   });
 }
 
@@ -333,30 +347,113 @@ function hookPath(name) {
     : path.join(__dirname, name);
 }
 
-// settings.json es JSON: una ruta de Windows con backslashes habría que
-// escaparla dos veces. Con barras normales funciona igual y se lee.
-function toPosix(p) { return p.split(path.sep).join('/'); }
-
-function hooksConfig() {
-  const h = toPosix(hookPath('hook.js'));
-  const one = function (arg, timeout) {
-    return [{ hooks: [{ type: 'command', command: 'node "' + h + '" ' + arg, async: true, timeout: timeout || 5 }] }];
-  };
-  return JSON.stringify({
-    hooks: {
-      SessionStart: one('start', 10),
-      UserPromptSubmit: one('working'),
-      Notification: one('waiting'),
-      Stop: one('done'),
-      StopFailure: one('done'),
-      SessionEnd: one('end')
-    },
-    statusLine: {
-      type: 'command',
-      command: 'node "' + toPosix(hookPath('statusline.js')) + '"'
-    }
-  }, null, 2);
+// Dónde están nuestros scripts en ESTA instalación. Es lo único que app/setup.js
+// no puede averiguar solo: empaquetada viven en resources/, clonada en app/.
+function scripts() {
+  return { hook: hookPath('hook.js'), statusline: hookPath('statusline.js') };
 }
+
+// El bloque que se copia al portapapeles, para el que prefiere pegarlo él.
+function hooksConfig() {
+  return JSON.stringify(setup.desired(scripts()), null, 2);
+}
+
+/* ---------- el paso que falta ---------- */
+
+/*
+ * El pet no sirve de nada sin los hooks puestos, y hasta la 1.3.0 la única
+ * forma de enterarse de eso era preguntarle a Claude. Ahora la ventana lo
+ * pregunta sola y ofrece hacerlo.
+ *
+ * Con --auto no se pregunta nada: si el pet lo levantó un hook, los hooks
+ * están. Preguntarlo sería gastar una lectura de disco cada arranque para
+ * confirmar lo que ya sabemos.
+ */
+function pushSetup(extra) {
+  if (!win || win.isDestroyed()) return;
+  const st = AUTO ? { installed: true } : setup.status(scripts());
+  win.webContents.send('setup', Object.assign({
+    installed: st.installed,
+    broken: !!st.broken,
+    file: st.file || setup.settingsPath()
+  }, extra || {}));
+}
+
+ipcMain.on('install-hooks', function () {
+  const r = setup.install(scripts());
+  // El resultado va con el estado nuevo: la ventana muestra las dos cosas, si
+  // salió bien y qué pasó con el statusLine que ya tenías.
+  pushSetup({
+    result: {
+      ok: !!r.ok,
+      changed: !!r.changed,
+      error: r.error || null,
+      backup: !!r.backup,
+      delegated: (r.notes || []).indexOf('statusline:delegado') >= 0
+    }
+  });
+});
+
+ipcMain.on('copy-hooks', function () { clipboard.writeText(hooksConfig()); });
+
+// Abrir la CARPETA y no el archivo: settings.json no tiene por qué tener un
+// programa asociado, y en ese caso openPath no hace nada y parece que el botón
+// está roto.
+ipcMain.on('reveal-settings', function () {
+  const f = setup.settingsPath();
+  try { fs.mkdirSync(path.dirname(f), { recursive: true }); } catch (e) { /* ya estaba */ }
+  if (fs.existsSync(f)) shell.showItemInFolder(f);
+  else shell.openPath(path.dirname(f));
+});
+
+/* ---------- versión nueva ---------- */
+
+/*
+ * Lo único que este proyecto manda a la red, y sólo si lo dejás. Ver el
+ * encabezado de app/update.js: qué pide, qué no manda y las tres formas de
+ * apagarlo.
+ *
+ * El aviso se guarda por versión: si ya te dijimos que salió la 1.4.0, no te lo
+ * repetimos todos los días. La próxima vez que hable va a ser por la 1.5.0.
+ */
+function checkUpdate(force) {
+  const conf = readConf();
+  if (!update.enabled(conf)) return;
+
+  update.check({
+    current: app.getVersion(),
+    conf: conf,
+    lastCheck: conf.updateCheckedAt,
+    force: !!force
+  }, function (found, asked) {
+    if (asked) writeConf({ updateCheckedAt: Date.now() });
+    if (!found) return;
+    if (readConf().updateSeen === found.version && !force) return;
+    writeConf({ updateSeen: found.version });
+    if (win && !win.isDestroyed()) win.webContents.send('update', found);
+  });
+}
+
+function setUpdates(on) {
+  const want = !!on;
+  writeConf({ updates: want });
+  // Se prende y se apaga desde dos lados: el check del panel de bienvenida y el
+  // menú del botón derecho. El que no lo tocó tiene que quedar mostrando lo
+  // mismo, o el usuario ve dos respuestas distintas a la misma pregunta.
+  if (win && !win.isDestroyed()) win.webContents.send('updates-pref', want);
+  // Prendiéndolo se pregunta en el momento: el que acaba de activarlo quiere
+  // saber ahora, no mañana.
+  if (want) checkUpdate(true);
+}
+
+ipcMain.on('set-updates', function (_e, on) { setUpdates(on); });
+
+ipcMain.on('open-releases', function (_e, url) {
+  // La URL no viene del renderer por confianza sino por comodidad: se acepta
+  // sólo si es del repo. Cualquier otra cosa abre la página de releases.
+  const ok = typeof url === 'string' && url.indexOf(update.PAGE.slice(0, update.PAGE.lastIndexOf('/releases'))) === 0;
+  shell.openExternal(ok ? url : update.PAGE);
+});
 
 ipcMain.on('menu', function () {
   if (!win) return;
@@ -376,7 +473,53 @@ ipcMain.on('menu', function () {
       checked: win.isAlwaysOnTop(),
       click: function (item) { win.setAlwaysOnTop(item.checked, 'screen-saver'); }
     },
+    {
+      // Lo único que este proyecto manda a la red, y se apaga acá. Con la
+      // variable de ambiente puesta el ítem se ve pero no se puede mover: la
+      // decisión la tomó quien lanzó el proceso.
+      label: 'Avisarme de versiones nuevas',
+      type: 'checkbox',
+      enabled: !process.env.CLAUDE_PET_NO_UPDATE_CHECK,
+      checked: update.enabled(readConf()),
+      click: function (item) { setUpdates(item.checked); }
+    },
     { type: 'separator' },
+    {
+      label: 'Instalar los hooks en Claude Code',
+      click: function () {
+        const r = setup.install(scripts());
+        if (!r.ok) {
+          dialog.showMessageBox(win, {
+            type: 'warning',
+            title: 'No se pudo',
+            message: r.error === 'roto'
+              ? 'Tu settings.json tiene un error de sintaxis.'
+              : 'No se pudo escribir el archivo.',
+            detail: r.error === 'roto'
+              ? ['No lo tocamos: pisarlo sería borrarte lo que haya adentro.',
+                 '', r.file].join('\n')
+              : [String(r.detail || ''), '', r.file].join('\n'),
+            buttons: ['Listo']
+          });
+          return;
+        }
+        const notes = r.notes || [];
+        dialog.showMessageBox(win, {
+          type: 'info',
+          title: r.changed ? 'Listo' : 'Ya estaba',
+          message: r.changed ? 'Los hooks quedaron instalados.' : 'Los hooks ya estaban puestos.',
+          detail: [
+            r.changed ? 'Abrí una terminal nueva y el pet empieza a seguirte.' : '',
+            notes.indexOf('statusline:delegado') >= 0
+              ? 'Tu statusLine no se tocó: el del pet se lo delega.' : '',
+            r.backup ? 'Copia de tu archivo anterior al lado, con .bak- en el nombre.' : '',
+            '', r.file
+          ].filter(Boolean).join('\n'),
+          buttons: ['Listo']
+        });
+        pushSetup();
+      }
+    },
     {
       label: 'Copiar configuración de hooks',
       click: function () {

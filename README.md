@@ -14,7 +14,7 @@ dibujo es un módulo aparte: cualquiera puede escribir el suyo y elegirlo desde 
 [![Platform](https://img.shields.io/badge/platform-Windows%20·%20macOS%20·%20Linux-1f2430)](#instalar)
 [![Runtime](https://img.shields.io/badge/runtime-Electron-4a6fa5)](pet/package.json)
 [![Dependencias del dibujo](https://img.shields.io/badge/dependencias%20del%20dibujo-0-2b6e4f)](avatars/penguin/draw.js)
-[![Red](https://img.shields.io/badge/red-cero%20peticiones-2b6e4f)](SECURITY.md)
+[![Red](https://img.shields.io/badge/red-1%20pedido%2Fd%C3%ADa%2C%20apagable-2b6e4f)](SECURITY.md#lo-único-que-sale-el-chequeo-de-versión)
 
 </div>
 
@@ -70,6 +70,11 @@ una esquina del escritorio y te lo dice sin que la mires.
 - **Vive lo que dura Claude Code.** Lo abre el hook `SessionStart` y se cierra
   solo 25 segundos después de que se va la última sesión. No arranca con
   Windows ni queda dando vueltas.
+- **Se configura solo.** La primera vez que lo abrís sin los hooks puestos te
+  abre un panel con el paso que falta y un botón que lo hace por vos, fusionando
+  en tu `settings.json` sin pisarte nada.
+- **Te avisa si salió una versión nueva.** Una vez por día, una sola vez por
+  versión, y se apaga desde el menú.
 
 ### Con varias sesiones abiertas
 
@@ -184,13 +189,54 @@ releases se arman en GitHub Actions, una plataforma por runner: está en
 
 ## Configurar
 
-Los hooks van en `~/.claude/settings.json` y afectan a todas tus sesiones.
+El pet dibuja, pero no adivina: lo que sabe de tus sesiones se lo cuentan los
+**hooks de Claude Code**. Sin ese paso es un muñeco que no se entera de nada.
 
-**Si lo instalaste, no busques la ruta a mano:** botón derecho sobre el pet →
-*Copiar configuración de hooks*. La app arma el bloque con sus propias rutas y
-te lo deja en el portapapeles, listo para pegar.
+### El camino corto: que lo haga él
 
-Si trabajás desde el repo, cambiá la ruta por la tuya:
+**Abrí el pet y apretá «Instalar por mí».** La primera vez que lo abrís sin los
+hooks puestos, se abre solo un panel que dice *Falta un paso*:
+
+```
+┌─────────────────────────────┐
+│  FALTA UN PASO           ✕  │
+│                             │
+│  Para seguirte, el pet      │
+│  necesita los hooks de      │
+│  Claude Code.               │
+│                             │
+│  1. Instalarlos en          │
+│     ~/.claude/settings.json │
+│  2. Abrir una terminal nueva│
+│                             │
+│  [   Instalar por mí    ]   │
+│  [ Copiar y lo hago yo  ]   │
+│  ☑ Avisarme si sale una     │
+│    versión nueva            │
+└─────────────────────────────┘
+```
+
+También está en el botón derecho → *Instalar los hooks en Claude Code*, por si
+lo cerraste.
+
+Lo que hace es fusionar su bloque en tu `settings.json` **sin pisarte nada**:
+
+- Deja una copia de tu archivo anterior al lado, con `.bak-` en el nombre.
+- Tus otros hooks, tus permisos y todo lo demás quedan intactos.
+- **Si ya tenías un `statusLine`, no te lo cambia**: el del pet lo envuelve y se
+  lo delega, así no perdés tu barra.
+- Apretarlo dos veces no duplica nada.
+- Si tu `settings.json` tiene un error de sintaxis, no lo toca y te lo dice.
+
+Después **abrí una terminal nueva** — una sesión que ya estaba abierta no toma
+hooks nuevos.
+
+### El camino largo: pegarlo vos
+
+Si preferís ver qué se escribe antes de que se escriba, *Copiar y lo hago yo*
+te deja el bloque en el portapapeles y te abre la carpeta.
+
+Trabajando desde el repo, cambiá la ruta por la tuya:
 
 ```json
 {
@@ -258,6 +304,32 @@ Sin esto el pet funciona igual, sólo que se entera del límite a medias: si
 Claude Code lo menciona en el texto de un aviso, se duerme igual pero muestra
 **«OOT — Out of Tokens»** sin hora, porque no la tiene. No inventa una.
 
+## Versiones nuevas
+
+El pet mira una vez por día si salió una versión nueva y, si hay, te lo dice en
+el globo. Un click y te abre la página de releases en el navegador. **No
+descarga ni instala nada**, y lo dice una sola vez por versión: si ya te avisó
+de la 1.4.0, la próxima vez que abra la boca va a ser por la 1.5.0.
+
+Es lo único que este proyecto manda a la red. Un `GET` a la API pública de
+GitHub, sin identificadores, sin telemetría y sin mandar ni siquiera qué versión
+tenés — está todo detallado en [SECURITY.md](SECURITY.md#lo-único-que-sale-el-chequeo-de-versión).
+
+**Viene prendido, y lo ves la primera vez.** El check está abajo de los dos
+botones del panel de bienvenida, ya marcado: si no lo querés, lo desmarcás ahí
+mismo antes de que salga el primer pedido. Se guarda al toque, sin esperar a que
+aprietes ningún botón.
+
+Después se apaga desde cualquiera de estos tres lados:
+
+| | |
+|---|---|
+| Botón derecho → *Avisarme de versiones nuevas* | En cualquier momento. Está sincronizado con el check del panel. |
+| `CLAUDE_PET_NO_UPDATE_CHECK=1` | Antes del primer arranque: ni la primera corrida pregunta nada. Con esto puesto el check se ve pero no se puede tocar. |
+| `"updates": false` en `pet.json` | Para dejarlo puesto en varias máquinas. |
+
+Apagado son **cero pedidos**, no un pedido que se descarta.
+
 ## Manejarlo
 
 | | |
@@ -268,11 +340,17 @@ Claude Code lo menciona en el texto de un aviso, se duerme igual pero muestra
 | **☰** | Panel de sesiones: todas las abiertas, en qué anda cada una y desde cuándo. |
 | **⋯** | Panel de ajustes: tamaño, avatar, paleta y notebook. |
 | **✕** | Lo cierra. Vuelve cuando arranques de cero, no en el próximo prompt ni porque abras otra terminal al lado. |
-| **Botón derecho** | Menú nativo: volver abajo a la izquierda, sacar el «siempre encima», abrir la carpeta de estado, salir. |
+| **Botón derecho** | Menú nativo: volver abajo a la izquierda, sacar el «siempre encima», prender o apagar el aviso de versiones nuevas, instalar o copiar los hooks, abrir la carpeta de estado, salir. |
 
 Los botones van a la izquierda y saltan a la derecha si la ventana quedó pegada
 al borde izquierdo de la pantalla. El panel abre **arriba** del avatar para no
 taparlos, y mide siempre lo mismo (228 × 254) en los tres tamaños.
+
+**Los paneles se cierran solos si los abandonás.** Abrís el de sesiones de un
+click, mirás, y volvés a lo tuyo: si en tres segundos no pasaste el mouse por
+encima, se apaga y se va. Tocarlo una vez lo cancela — a partir de ahí lo estás
+usando y no te lo cerramos en la cara mientras elegís avatar. El de *Falta un
+paso* es la excepción: ése tiene su ✕ y se queda hasta que decidas.
 
 ### Por qué no te come los clicks
 
@@ -348,16 +426,18 @@ Claude-pet/
 │   │                     avatares y los anclajes de la notebook y las manos.
 │   ├── avatars.js        El registro de avatares.
 │   ├── devices.js        El registro de notebooks, y la silueta que dibujan.
-│   └── greeting.js       El saludo: «Hi!», «Bye!» y cuánto duran. Lo miran la
-│                         ventana, cada avatar y el proceso principal, que tiene
-│                         que esperar a que el adiós se vea antes de cerrar.
+│   ├── greeting.js       El saludo: «Hi!», «Bye!» y cuánto duran. Lo miran la
+│   │                     ventana, cada avatar y el proceso principal, que tiene
+│   │                     que esperar a que el adiós se vea antes de cerrar.
+│   └── rig.js            El armazón que comparten los avatares: el bucle, la
+│                         mirada, el parpadeo, el tecleo, entrar y salir.
 │
 ├── avatars/              Los personajes. Una carpeta por avatar.
 │   ├── penguin/
 │   │   ├── draw.js       El dibujo: SVG a mano, sin API de imágenes. Sirve en
 │   │   │                 cualquier página web, sin nada del resto.
 │   │   └── avatar.js     El register() que lo declara ante el sistema.
-│   └── otter/            Igual que el anterior: dibujo y registro.
+│   └── otter/ …          Y otros diez, con la misma forma.
 │
 ├── devices/              Las máquinas.
 │   └── laptops.js        Las diez que vienen de fábrica.
@@ -376,6 +456,12 @@ Claude-pet/
 │   │                     el tuyo. Es la única puerta por la que entra el
 │   │                     límite de uso — ningún hook lo trae.
 │   ├── quota.js          Lee esa cuota y decide si hay que dormir.
+│   ├── sessions.js       La proyección de N sesiones abiertas a una sola
+│   │                     escena. Fuera de Electron, para poder testearla.
+│   ├── setup.js          Fusiona los hooks en tu settings.json sin pisarte
+│   │                     nada. Todo lo que decide son funciones puras.
+│   ├── update.js         El chequeo de versión: comparar, decidir, y el
+│   │                     interruptor que lo apaga entero.
 │   ├── turn.js           El latido del turno. Ctrl+C no dispara ningún hook,
 │   │                     así que se confirma contra el transcript: mientras
 │   │                     crece, el turno vive.
@@ -398,9 +484,13 @@ poner en cualquier página web con un `<div>` y dos líneas.
 
 ## Seguridad y privacidad
 
-No habla con la red, no hace tracking y no lee tus conversaciones. Lo único que
-guarda es, por sesión abierta, el directorio del proyecto y el estado — en tu
-perfil local, y se borra cuando la sesión termina.
+No hace tracking y no lee tus conversaciones. Lo único que guarda es, por sesión
+abierta, el directorio del proyecto y el estado — en tu perfil local, y se borra
+cuando la sesión termina.
+
+Lo único que manda a la red es un pedido por día a la API pública de GitHub para
+ver si salió una versión nueva, sin identificadores de ningún tipo, y se apaga
+desde el menú.
 
 La ventana corre con sandbox, aislamiento de contexto y una CSP con
 `connect-src 'none'`, así que ni un bug podría hacer una petición. El hook sale

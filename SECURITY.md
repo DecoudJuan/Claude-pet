@@ -9,15 +9,94 @@ hace, lo que guarda y lo que decidimos cerrar.
 
 ## Lo corto
 
-- **No habla con la red.** Ni una petición. No hay `fetch`, ni WebSocket, ni
-  cliente HTTP, ni SDK de analítica en el árbol de dependencias del runtime.
+- **Habla con la red una vez por día, y se apaga.** Un `GET` a
+  `api.github.com/repos/DecoudJuan/Claude-pet/releases/latest` para ver si salió
+  una versión nueva. Es todo. Cómo apagarlo, y qué se manda exactamente, está
+  [más abajo](#lo-único-que-sale-el-chequeo-de-versión).
 - **No hace tracking.** No hay identificadores, ni telemetría, ni «uso
-  anónimo», ni un endpoint al que mandar nada.
+  anónimo», ni un endpoint al que mandar nada. El chequeo de versión no manda
+  ni qué versión tenés.
+- **No descarga ni instala nada.** Si hay una versión nueva te lo dice y te abre
+  la página de releases en tu navegador. Bajar el instalador lo hacés vos.
 - **No lee tus conversaciones.** Nunca abre el transcript de Claude Code.
 - **No corre nada que venga de afuera.** Los únicos procesos que lanza son
   Electron (el suyo) y lo que vos pusiste en tus hooks.
+- **Escribe en un archivo tuyo, si se lo pedís.** El botón «Instalar por mí»
+  fusiona los hooks en tu `~/.claude/settings.json`. Nunca sin que lo aprietes,
+  siempre dejando una copia, y sin pisar lo que ya tenías —
+  [cómo](#instalar-los-hooks-en-tu-settingsjson).
 
-Lo único que sale de tu máquina es lo que vos subas a un repositorio.
+---
+
+## Lo único que sale: el chequeo de versión
+
+Hasta la 1.3.0 este documento decía «no habla con la red, ni una petición». Dejó
+de ser cierto en la 1.4.0 y esta sección existe para no esconderlo.
+
+**Qué pide.** Una URL fija, sin nada interpolado:
+
+```
+GET https://api.github.com/repos/DecoudJuan/Claude-pet/releases/latest
+User-Agent: claude-pet
+Accept: application/vnd.github+json
+```
+
+**Qué manda de vos.** Nada. No va tu versión, ni tu sistema operativo, ni un id
+de instalación, ni una cookie. El `User-Agent` es una constante igual para todos
+—GitHub rechaza los pedidos sin uno— y no distingue una instalación de otra. Lo
+único que GitHub ve es que alguien con tu IP pidió esa URL pública, igual que si
+la abrieras en el navegador.
+
+**Cuándo.** Treinta segundos después de abrir la ventana, y como mucho una vez
+cada 24 h. Si el pet se cierra antes de esos 30 s —una sesión corta— no llega a
+preguntar nada.
+
+**Se ve la primera vez.** Viene prendido, pero el check está a la vista en el
+panel de bienvenida —abajo de los botones, ya marcado— así que se puede apagar
+antes de que salga el primer pedido, sin haber leído este documento.
+
+**Cómo se apaga.** Cuatro lugares, para cuatro momentos:
+
+| | |
+|---|---|
+| El check del panel de bienvenida | La primera vez que lo abrís, antes del primer pedido. |
+| Botón derecho → **Avisarme de versiones nuevas** | En cualquier momento. Los dos escriben la misma preferencia y se muestran sincronizados. |
+| `CLAUDE_PET_NO_UPDATE_CHECK=1` en el ambiente | Antes del primer arranque. Ni la primera corrida pregunta. Con esto puesto, ni el check ni el ítem del menú se pueden mover. |
+| `"updates": false` en `pet.json` | Para desplegarlo en varias máquinas. |
+
+Apagado son **cero llamados**, no un llamado que se descarta: `enabled()` es lo
+primero que se pregunta y devuelve antes de que se cargue el módulo `https`.
+Hay un test que lo verifica contando invocaciones, en `test/update.test.js`.
+
+**Dónde corre.** En el proceso principal, nunca en la ventana. La CSP del
+renderer sigue teniendo `connect-src 'none'` y así se queda: un avatar de
+terceros no gana ninguna capacidad nueva por esto.
+
+---
+
+## Instalar los hooks en tu settings.json
+
+El botón «Instalar por mí» escribe en `~/.claude/settings.json`, que es un
+archivo tuyo y casi nunca está vacío: ahí viven tus permisos, tu modelo y tus
+propios hooks. Las reglas, todas verificadas en `test/setup.test.js`:
+
+- **Sólo cuando lo apretás.** No hay instalación silenciosa ni en el primer
+  arranque ni nunca.
+- **Copia antes de tocar.** Si el archivo existía, queda un `.bak-<fecha>` al
+  lado antes de escribir.
+- **Fusiona, no pisa.** Tus otros hooks, tus permisos y cualquier clave que no
+  conozcamos salen intactos. Los hooks propios en los mismos eventos se
+  conservan y el del pet se les suma.
+- **No te toca el `statusLine`.** Es el único campo que es uno solo, así que si
+  ya tenías el tuyo, el del pet lo envuelve y se lo delega en vez de
+  reemplazarlo. Tu comando se pega textual, sin re-citar.
+- **Si el JSON está roto, aborta.** Un `settings.json` que no se puede parsear
+  no se pisa: no sabemos qué estaríamos borrando.
+- **Instalar dos veces deja lo mismo que instalar una**, y una instalación
+  anterior en otra ruta se reemplaza en vez de acumularse.
+
+Lo que el pet escribe son comandos `node "<ruta>/hook.js" <evento>` apuntando a
+su propia instalación. Nada de eso sale de un input tuyo ni de la red.
 
 ---
 
@@ -29,6 +108,7 @@ Lo único que sale de tu máquina es lo que vos subas a un repositorio.
 | `%LOCALAPPDATA%\claude-pets\pet.lock` | El PID de la ventana, para no abrir dos. |
 | `%LOCALAPPDATA%\claude-pets\muted` | Una marca de «lo cerré a mano». |
 | `%APPDATA%\claude-pet\pet.json` | Tus preferencias: posición, tamaño, avatar, paleta y notebook. |
+| `~/.claude/settings.json` | **Lo modifica el pet, y sólo si apretás «Instalar por mí»**: le agrega sus seis hooks y, si no tenías uno, su `statusLine`. Queda una copia `.bak-<fecha>` al lado. |
 | `~/.claude/quota-status/current.json` | Lo escribe el statusline, no el pet: el porcentaje de uso y a qué hora vuelve. El pet sólo lo lee. Sin secretos ni contenido de tus conversaciones. |
 
 **Retención.** El archivo de una sesión se borra cuando la sesión termina
@@ -41,7 +121,9 @@ comando. Todo en texto plano, con los permisos de tu usuario, en tu perfil
 local. Si esa ruta ya es sensible para vos, tenelo en cuenta: el pet no la
 cifra ni pretende hacerlo.
 
-**Borrar todo:** borrá esas dos carpetas. No queda nada más.
+**Borrar todo:** borrá esas dos carpetas y sacá el bloque de hooks de tu
+`settings.json` — es lo único que el pet deja fuera de su propio territorio. No
+queda nada más.
 
 ---
 
@@ -82,11 +164,18 @@ La CSP sin `unsafe-inline` es la razón de que el código de la ventana viva en
 `pet.js` y no adentro del HTML: un script inline no correría. La restricción
 está antes que la comodidad, a propósito.
 
-### La superficie del preload es de siete funciones
+### La superficie del preload es una lista cerrada
 
 `preload.js` es lo único que la página ve del proceso principal, y no expone
 `ipcRenderer`: expone funciones sueltas. La página no puede emitir un mensaje
 IPC arbitrario, sólo los que ahí están declarados.
+
+Las que se sumaron en la 1.4.0 —instalar los hooks, copiar el bloque, abrir la
+página de releases, prender y apagar el chequeo— **no abren ninguna puerta
+nueva**: todas las ejecuta el proceso principal, que ya podía hacerlas. La
+página pide, no hace. `openReleases` recibe una URL del renderer y la valida
+contra el repo antes de abrirla; cualquier otra cosa cae en la página de
+releases.
 
 Del lado que recibe, los mensajes se validan: el tamaño contra una lista
 cerrada, los ids contra `[A-Za-z0-9_-]` y 64 caracteres. Nada de eso se
@@ -202,15 +291,14 @@ todas en verde sería teatro. Lo que sí aplica:
 | **A05 Configuración incorrecta** | Es lo que más trabajo llevó: sandbox, aislamiento de contexto, CSP y bloqueo de navegación, todo explícito arriba. |
 | **A06 Componentes vulnerables** | Una sola dependencia de runtime: Electron. Es la que hay que mantener al día — ver abajo. |
 | **A07 Identificación y autenticación** | No aplica: no hay login. |
-| **A08 Integridad de software y datos** | Sin actualizaciones automáticas ni carga remota de código: lo que corre es lo que clonaste. Los avatares de terceros son la excepción, y tienen su sección. |
+| **A08 Integridad de software y datos** | Sin actualizaciones automáticas ni carga remota de código: lo que corre es lo que instalaste. El chequeo de versión lee un número y te abre el navegador; no descarga ni ejecuta nada. Los avatares de terceros son la excepción, y tienen su sección. |
 | **A09 Registro y monitoreo** | Se registran errores del renderer en la consola del proceso, nada más. No hay logs persistentes ni telemetría. |
-| **A10 SSRF** | No aplica: no hay peticiones salientes de ningún tipo. |
+| **A10 SSRF** | Hay una petición saliente, a una URL constante y sin una sola parte que venga de un input: no hay forma de que algo la redirija a otro lado. Se apaga entera. |
 
 **La superficie real es A06.** Electron trae Chromium, y Chromium tiene
 vulnerabilidades. Si vas a dejar esto corriendo todo el día, mantenelo al día:
 
 ```bash
-cd app
 npm audit
 npm update electron
 ```

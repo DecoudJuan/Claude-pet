@@ -19,6 +19,8 @@
   var btnSes  = document.getElementById('btn-ses');
   var pgSet   = document.getElementById('page-settings');
   var pgSes   = document.getElementById('page-sessions');
+  var pgSetup = document.getElementById('page-setup');
+  var setupNote = document.getElementById('setup-note');
   var sesList = document.getElementById('ses-list');
   var chromeEl = document.getElementById('chrome');
   var selAv   = document.getElementById('sel-avatar');
@@ -142,11 +144,149 @@
     panel.hidden = !next;
     pgSet.hidden = page !== 'settings';
     pgSes.hidden = page !== 'sessions';
+    pgSetup.hidden = page !== 'setup';
     stage.classList.toggle('open', next);
     btnMenu.setAttribute('aria-expanded', String(next && page === 'settings'));
     btnSes.setAttribute('aria-expanded', String(next && page === 'sessions'));
-    if (next) { hush(); if (page === 'settings') renderPanel(); else renderSessions(); }
+    if (next) {
+      hush();
+      if (page === 'settings') renderPanel();
+      else if (page === 'sessions') renderSessions();
+      // El paso que falta no se va solo: tiene su ✕ y se queda hasta que
+      // decidas. Los otros dos son consultas de pasada.
+      if (page !== 'setup') armAutoClose();
+    } else {
+      cancelAutoClose();
+    }
   }
+
+  /* ---------- el panel abandonado ---------- */
+
+  /*
+   * Abrís el panel de un click, ves lo que querías ver y volvés a lo tuyo sin
+   * cerrarlo. Como se abre hacia arriba y mide 254 px, queda una caja blanca
+   * flotando sobre el escritorio hasta que te acordás de sacarla.
+   *
+   * Así que si en tres segundos no pasaste el mouse por encima, se apaga y se
+   * cierra. Tocarlo una vez lo cancela para siempre: a partir de ahí lo estás
+   * usando, y cerrarte un panel mientras elegís avatar sería peor que dejarlo
+   * abierto. Por eso tampoco se rearma al salir — el desplegable de un <select>
+   * lo dibuja el sistema operativo FUERA de la ventana, así que abrirlo cuenta
+   * como salir del panel y el fade te lo cerraría en la cara.
+   */
+  var closeTimer = 0;
+  var fadeTimer = 0;
+
+  function cancelAutoClose() {
+    clearTimeout(closeTimer); closeTimer = 0;
+    clearTimeout(fadeTimer); fadeTimer = 0;
+    panel.classList.remove('fading');
+  }
+
+  function armAutoClose() {
+    cancelAutoClose();
+    closeTimer = setTimeout(function () {
+      panel.classList.add('fading');
+      fadeTimer = setTimeout(function () {
+        togglePanel(false);
+        panel.classList.remove('fading');
+        // Nadie está encima: la ventana vuelve a dejar pasar los clicks del
+        // escritorio en vez de quedarse atajándolos.
+        setInteractive(false);
+        hot(false);
+      }, 340);
+    }, 3000);
+  }
+
+  panel.addEventListener('pointerenter', cancelAutoClose);
+
+  /* ---------- el paso que falta ---------- */
+
+  /*
+   * La única página que se abre sola. El resto del pet espera a que pases por
+   * encima, porque el resto del pet es opcional; sin los hooks puestos no hay
+   * nada que mirar, y el que lo bajó de un .exe no tiene por qué deducir que la
+   * respuesta está abajo del botón derecho.
+   *
+   * Una vez que están, no vuelve a aparecer nunca.
+   */
+  function note(text, kind) {
+    setupNote.textContent = text || '';
+    setupNote.hidden = !text;
+    setupNote.className = kind || '';
+  }
+
+  window.pet.onSetup(function (s) {
+    var r = s.result;
+
+    if (r) {
+      if (!r.ok) {
+        note(r.error === 'roto'
+          ? 'Tu settings.json tiene un error de sintaxis. No lo tocamos.'
+          : 'No se pudo escribir el archivo.', 'bad');
+      } else if (r.delegated) {
+        note('Listo. Tu statusLine no se tocó: el nuestro se lo delega.', 'good');
+      } else {
+        note(r.changed ? 'Listo. Abrí una terminal nueva.' : 'Ya estaban puestos.', 'good');
+      }
+    }
+
+    if (s.installed) {
+      // Con el aviso recién dado se deja leer un momento antes de cerrarse; sin
+      // aviso (arrancó con todo puesto) no hay nada que cerrar.
+      if (r && r.ok) setTimeout(function () { if (page === 'setup') togglePanel(false); }, 2600);
+      else if (page === 'setup') togglePanel(false);
+      return;
+    }
+
+    if (s.broken) note('Tu settings.json no se puede leer. Revisalo y probá de nuevo.', 'bad');
+    togglePanel(true, 'setup');
+    // El panel abierto no sirve si la ventana sigue ignorando el mouse: los
+    // botones no se podrían apretar hasta que muevas el puntero por encima.
+    setInteractive(true);
+  });
+
+  document.getElementById('btn-install').addEventListener('click', function (e) {
+    e.stopPropagation();
+    note('Instalando…');
+    window.pet.installHooks();
+  });
+
+  document.getElementById('btn-copy').addEventListener('click', function (e) {
+    e.stopPropagation();
+    window.pet.copyHooks();
+    window.pet.revealSettings();
+    note('Copiado. Pegalo dentro de settings.json.', 'good');
+  });
+
+  /*
+   * El check de las versiones nuevas. Viene marcado —es el default— pero acá lo
+   * ve, que es el punto: el chequeo es lo único que el pet manda a la red y el
+   * único momento en que tiene la atención del usuario es este panel. Que se
+   * entere leyendo el README después del primer pedido no es enterarse.
+   *
+   * Se guarda al toque, sin esperar a que apriete ningún botón: desmarcarlo y
+   * cerrar el panel con la ✕ tiene que alcanzar.
+   */
+  var chkUp = document.getElementById('chk-updates');
+  var fldUp = document.getElementById('fld-updates');
+
+  chkUp.addEventListener('change', function () {
+    window.pet.setUpdates(chkUp.checked);
+  });
+
+  // Lo tocaron del otro lado — el menú del botón derecho — o es el estado
+  // guardado que llega al arrancar.
+  window.pet.onUpdatesPref(function (on) { chkUp.checked = !!on; });
+
+  // Cerrarlo sin instalar nada es una respuesta válida. Vuelve en el próximo
+  // arranque porque el paso sigue faltando, pero no te lo discute ahora.
+  document.getElementById('btn-setup-close').addEventListener('click', function (e) {
+    e.stopPropagation();
+    togglePanel(false);
+    setInteractive(false);
+    hot(false);
+  });
 
   /* ---------- la lista de sesiones ---------- */
 
@@ -363,6 +503,39 @@
   // llegaría a verse nunca, porque la app se cierra antes.
   window.pet.onFarewell(function () { greet(G.GOODBYE); });
 
+  /* ---------- salió una versión nueva ---------- */
+
+  /*
+   * Lo dice una vez por versión y no vuelve a insistir: si ya te avisamos de la
+   * 1.4.0, la próxima vez que hable va a ser por la 1.5.0. Un adorno que te
+   * recuerda todos los días que no lo actualizaste es peor que uno viejo.
+   *
+   * Y no se dice si el panel está abierto o si hay algo que contar de Claude
+   * Code: el globo es para lo que está pasando en tu turno. Una versión nueva
+   * puede esperar a que el pet no tenga nada mejor que decir.
+   */
+  var pendingUpdate = null;
+
+  window.pet.onUpdate(function (u) {
+    if (!u || !u.version) return;
+    pendingUpdate = u;
+    tellUpdate();
+  });
+
+  function tellUpdate() {
+    if (!pendingUpdate) return;
+    if (!panel.hidden) return;
+    if (phase !== 'idle' && phase !== 'sleeping') return;   // hay algo más importante
+    var u = pendingUpdate;
+    pendingUpdate = null;
+    say('Salió la ' + u.version, [{ text: 'clic acá para bajarla', strong: true }], 12000);
+    bubble.addEventListener('click', function go() {
+      bubble.removeEventListener('click', go);
+      window.pet.openReleases(u.url);
+      hush();
+    });
+  }
+
   /* ---------- estados ---------- */
 
   var phase = 'idle';
@@ -375,6 +548,15 @@
     conf.palette = c.palette;
     conf.device = c.device;
     applySide(c.side);
+    // El check viene marcado en el HTML porque ése es el default, pero lo que
+    // manda es lo que elegiste la vez pasada.
+    chkUp.checked = c.updates !== false;
+    if (c.updatesLocked) {
+      // La variable de ambiente ya decidió: se muestra, no se toca.
+      chkUp.disabled = true;
+      fldUp.classList.add('locked');
+      fldUp.title = 'Apagado por CLAUDE_PET_NO_UPDATE_CHECK';
+    }
     mountAvatar();
     // Recién acá: antes de montar no hay a quién ponerle la pose.
     greet(G.HELLO);
@@ -442,6 +624,9 @@
       done(s.notice);
     } else {
       hush();
+      // Con el turno quieto y nada que contar, recién ahí cabe el aviso de la
+      // versión nueva. Si llegó mientras estabas laburando, esperó hasta acá.
+      tellUpdate();
     }
   });
 
