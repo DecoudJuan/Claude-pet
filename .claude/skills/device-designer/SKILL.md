@@ -25,7 +25,7 @@ En `devices/laptops.js`:
 
 ```js
 { id: 'macbook-midnight', name: 'MacBook · Midnight',
-  lid: '#2b3442', badge: 'glow', badgeColor: '#c3ccd8' }
+  lid: '#2b3442', badge: 'apple', badgeColor: '#c3ccd8' }
 ```
 
 | Campo | |
@@ -33,7 +33,7 @@ En `devices/laptops.js`:
 | `id` | Único y estable. Se guarda en la configuración del usuario: si lo cambiás, el que lo tenía elegido vuelve al default. |
 | `name` | Lo que se lee en el panel. Para variantes de color usá `Marca · Color` — el panel es angosto y así se agrupan al ordenar. |
 | `lid` | El dorso de la tapa. Es el color que se ve. |
-| `badge` | `glow` (círculo lleno, tipo manzana) · `bar` (barrita, tipo Lenovo/Samsung) · `ring` (anillo, tipo HP/Dell) · `none` (sin marca). |
+| `badge` | `apple` (la manzanita, para cualquier Mac) · `glow` (círculo lleno) · `bar` (barrita, tipo Lenovo/Samsung) · `ring` (anillo, tipo HP/Dell) · `none` (sin marca). |
 | `badgeColor` | El logo. |
 
 Listo. El selector del panel se llena solo desde el registro.

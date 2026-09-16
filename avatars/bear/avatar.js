@@ -13,12 +13,6 @@ window.PetAvatars.register({
     { id: 'miel', name: 'Miel' },
     { id: 'polar', name: 'Polar' }
   ],
-  accessories: [
-    { id: 'none', name: 'Ninguno' },
-    { id: 'airpods', name: 'AirPods' },
-    { id: 'glasses', name: 'Anteojos' },
-    { id: 'both', name: 'Ambos' }
-  ],
   mount: function (host, opts) {
     return window.BearMascot.mount(host, opts);
   }

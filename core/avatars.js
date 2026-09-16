@@ -15,7 +15,7 @@
  *     mount: function (host, opts) { ... }
  *   })
  *
- * `opts` llega con { palette, accessory, pointer: 'manual', interactive: false, label }.
+ * `opts` llega con { palette, pointer: 'manual', interactive: false, label }.
  *
  * mount() tiene que devolver un handle con este contrato — es todo lo que el
  * pet le pide, y lo único que hay que respetar para que un avatar nuevo ande:
@@ -31,7 +31,7 @@
  * core/greeting.js. El avatar asoma desde abajo del cuadro y se hunde por el
  * mismo camino; el «Hi!» y el «Bye!» los dice el pet, en su globo.
  *
- * Opcionales: setPalette(id), setAccessory(id) y element (el nodo, para tests).
+ * Opcionales: setPalette(id) y element (el nodo, para tests).
  */
 (function (root) {
   'use strict';
@@ -48,7 +48,6 @@
       id: def.id,
       name: def.name || def.id,
       palettes: def.palettes || [],
-      accessories: def.accessories || [],
       mount: def.mount
     };
     byId[entry.id] = entry;

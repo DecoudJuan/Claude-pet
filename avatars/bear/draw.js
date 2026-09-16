@@ -57,16 +57,6 @@
     '.br-inner  { fill: var(--br-inner); }',
     '.br-dark   { fill: var(--br-line); }',
     '.br-mouth  { fill: none; stroke: var(--br-line); stroke-width: 4; stroke-linecap: round; }',
-    // Accesorios opcionales. AirPods y anteojos son independientes para poder
-    // mostrar ninguno, uno u otro, o ambos sin duplicar el dibujo del oso.
-    '.br-airpods, .br-glasses { display: none; pointer-events: none; }',
-    '.br[data-accessory="airpods"] .br-airpods, .br[data-accessory="both"] .br-airpods { display: inline; }',
-    '.br[data-accessory="glasses"] .br-glasses, .br[data-accessory="both"] .br-glasses { display: inline; }',
-    '.br-airpod { fill: #fff; stroke: var(--br-line); stroke-width: 3; stroke-linejoin: round; }',
-    '.br-glasses-back { fill: none; stroke: var(--br-cream); stroke-width: 7;',
-    '  stroke-linecap: round; stroke-linejoin: round; opacity: .92; }',
-    '.br-glasses-line { fill: none; stroke: var(--br-line); stroke-width: 4;',
-    '  stroke-linecap: round; stroke-linejoin: round; }',
     // --- estados de trabajo: la notebook y el tecleo ---
     '.br-laptop { opacity: 0; transition: opacity .22s ease; pointer-events: none; }',
     // esperando también muestra la notebook: sigue a mitad de tarea, no terminó
@@ -217,14 +207,6 @@
     '      <path class="br-mouth" d="M120 145 L120 154"/>',
     '      <path class="br-mouth" d="M120 154 C113 164 102 164 97 156"/>',
     '      <path class="br-mouth" d="M120 154 C127 164 138 164 143 156"/>',
-    '      <g class="br-airpods" transform="translate(0 -24)" aria-hidden="true">',
-    '        <path class="br-airpod" d="M56 84 C62 85 64 90 62 95 C60 100 56 102 51 99 L51 108 C51 113 44 113 44 108 L44 94 C44 87 49 83 56 84 Z"/>',
-    '        <path class="br-airpod" d="M184 84 C178 85 176 90 178 95 C180 100 184 102 189 99 L189 108 C189 113 196 113 196 108 L196 94 C196 87 191 83 184 84 Z"/>',
-    '      </g>',
-    '      <g class="br-glasses" aria-hidden="true">',
-    '        <path class="br-glasses-back" d="M56 96 C56 82 65 77 84 77 C103 77 110 84 110 99 C110 115 102 122 85 122 C67 122 56 114 56 96 Z M184 96 C184 82 175 77 156 77 C137 77 130 84 130 99 C130 115 138 122 155 122 C173 122 184 114 184 96 Z M110 91 C116 87 124 87 130 91"/>',
-    '        <path class="br-glasses-line" d="M56 96 C56 82 65 77 84 77 C103 77 110 84 110 99 C110 115 102 122 85 122 C67 122 56 114 56 96 Z M184 96 C184 82 175 77 156 77 C137 77 130 84 130 99 C130 115 138 122 155 122 C173 122 184 114 184 96 Z M110 91 C116 87 124 87 130 91"/>',
-    '      </g>',
     '    </g>',
 
     // La máquina no es del avatar: acá sólo va el hueco y las manos, que sí son
@@ -310,7 +292,6 @@
 
     svg.setAttribute('aria-label', options.label || 'Oso pardo. Sigue el cursor.');
     if (options.palette) svg.setAttribute('data-palette', options.palette);
-    svg.setAttribute('data-accessory', options.accessory || 'none');
     if (options.interactive !== false) svg.setAttribute('tabindex', '0');
 
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -480,7 +461,6 @@
         aim();
       },
       setPalette: function (name) { svg.setAttribute('data-palette', name); },
-      setAccessory: function (name) { svg.setAttribute('data-accessory', name || 'none'); },
       setDevice: applyDevice,
       destroy: function () {
         alive = false;
