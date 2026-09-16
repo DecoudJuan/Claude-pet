@@ -118,14 +118,37 @@ function write() {
     updatedAt: now
   }));
 
-  // Una sesión nueva empieza limpia: si lo habías cerrado a mano, vuelve.
-  if (KIND === 'start') {
+  // Una sesión nueva empieza limpia: si lo habías cerrado a mano, vuelve. Pero
+  // sólo si de verdad es un arranque limpio — con otras sesiones abiertas, la
+  // terminal nueva no es un empezar de cero, y resucitar el pet ahí es
+  // desobedecer: lo cerraste hace dos minutos y vuelve porque abriste otra
+  // pestaña. El silencio dura mientras dure la tanda.
+  if (KIND === 'start' && !othersAlive(id)) {
     try { fs.unlinkSync(MUTED); } catch (e) { /* no estaba silenciado */ }
   }
 
   // 'working' y 'waiting' también lo levantan: si el pet se cayó o nunca
   // arrancó (hooks agregados con la sesión ya abierta), no queda huérfano.
   if (KIND === 'start' || KIND === 'working' || KIND === 'waiting') ensurePet();
+}
+
+// ¿Hay otra sesión de Claude Code viva ahora mismo? Se mira lo mismo que mira
+// el pet — el directorio de estado — y con el mismo techo de 6 h, para que una
+// sesión que se murió sin avisar (un reinicio, un cierre a lo bruto) no deje
+// el pet silenciado para siempre.
+const STALE_MS = 6 * 60 * 60 * 1000;
+
+function othersAlive(self) {
+  let names;
+  try { names = fs.readdirSync(DIR); } catch (e) { return false; }
+  const now = Date.now();
+  return names.some(function (name) {
+    if (!name.endsWith('.json') || name === self + '.json') return false;
+    try {
+      const rec = JSON.parse(fs.readFileSync(path.join(DIR, name), 'utf8'));
+      return now - (rec.updatedAt || 0) < STALE_MS;
+    } catch (e) { return false; }
+  });
 }
 
 // El pet vive mientras haya sesiones: lo abre SessionStart y él mismo se cierra

@@ -10,36 +10,23 @@
  * frenado y el aviso se queda; cuando aparece, la sesión pasa a trabajar en el
  * acto y sin esperar ningún vencimiento.
  *
- * Replica los selectores de project() en app/main.js, que vive dentro del
- * proceso principal de Electron y no se puede importar suelto. Si allá cambia
- * la regla, este espejo tiene que cambiar con ella.
+ * Usa los selectores de verdad, los de app/sessions.js. Antes los copiaba a
+ * mano — main.js vive en el proceso principal de Electron y no se puede
+ * importar suelto —, así que el test podía seguir en verde con la regla ya
+ * cambiada del otro lado. Por eso la proyección se mudó a un módulo plano.
  */
 'use strict';
 
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const turn = require(path.join(__dirname, '..', 'app', 'turn.js'));
+const sessions = require(path.join(__dirname, '..', 'app', 'sessions.js'));
 const { check, done } = require('./check.js');
 
-const WAITING_TTL_MS = 40000;
-const WORKING_TTL_MS = 15 * 60 * 1000;
-
-function answered(s) { return turn.movedSince(s, s.updatedAt); }
-
-function waits(s, now) {
-  if (s.state !== 'waiting') return false;
-  if (!s.transcript) return now - (s.updatedAt || 0) < WAITING_TTL_MS;
-  return !answered(s);
-}
-
-function claims(s, now) {
-  if (now - (s.updatedAt || 0) >= WORKING_TTL_MS) return false;
-  return (s.state === 'working' ||
-          (s.state === 'waiting' && answered(s))) && turn.isActive(s, now);
-}
-
-function insists(s, now) { return now - (s.updatedAt || 0) < WAITING_TTL_MS; }
+const WORKING_TTL_MS = sessions.WORKING_TTL_MS;
+const waits = sessions.waits;
+const claims = sessions.works;
+const insists = sessions.insists;
 
 const tmp = path.join(os.tmpdir(), 'pet-transcript-' + Date.now() + '.jsonl');
 fs.writeFileSync(tmp, JSON.stringify({ type: 'user' }) + '\n');
