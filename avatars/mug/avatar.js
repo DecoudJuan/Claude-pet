@@ -1,0 +1,18 @@
+/*
+ * La taza, envuelto como avatar del pet.
+ *
+ * draw.js ya devuelve setState / look / poke / destroy — se lo da core/rig.js —
+ * así que acá no hay más que declararlo y pasarle las opciones.
+ */
+window.PetAvatars.register({
+  id: 'taza',
+  name: 'Taza de café',
+  palettes: [
+    { id: 'colour', name: 'Cerámica' },
+    { id: 'esmalte', name: 'Esmalte' },
+    { id: 'termo', name: 'Termo' }
+  ],
+  mount: function (host, opts) {
+    return window.MugMascot.mount(host, opts);
+  }
+});

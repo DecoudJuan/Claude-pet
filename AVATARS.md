@@ -232,6 +232,54 @@ No hay paso 4. No hay que tocar `main.js`, ni el panel, ni el CSS.
 - **Sin listeners globales.** Con `pointer: 'manual'` el avatar no escucha el
   mouse. Si igual lo hace, va a pelear con el pet por el arrastre.
 
+## El camino corto: `core/rig.js`
+
+Un avatar son dos cosas mezcladas: **la piel** —el cráneo, la cara, los colores,
+las patas— y **el armazón** —el bucle de animación, la mirada con paralaje, el
+parpadeo irregular, el tecleo, el codazo, el hueco de la máquina, entrar y
+salir, soltar los timers—. La piel no se parece en nada a la de al lado; el
+armazón es idéntico en todos.
+
+El pingüino, la nutria y el oso llevan las dos mitades adentro. Los nueve que
+vinieron después no: el armazón vive una sola vez en `core/rig.js` y cada uno
+trae nada más que su piel.
+
+```js
+window.PetRig.mount(host, opts, {
+  ns:    'zr',                     // prefijo de clases y variables CSS
+  label: 'Zorro. Sigue el cursor.',
+  edge:  'var(--zr-line)',         // con qué contorno se dibuja la notebook
+  css:   [ ... ],                  // paletas y partes: lo que es del personaje
+  head:  [ ... ],                  // el SVG de la cabeza y los accesorios
+  behind:[ ... ],                  // opcional: lo que va detrás del torso
+  front: [ ... ],                  // opcional: y lo que va delante
+  hands: { left: '...', right: '...', chin: '...' }
+});
+```
+
+El armazón arma el andamio —torso canónico, hueco de la máquina, las Z de
+dormir— y maneja los siete estados. De la piel espera cinco clases, y sólo las
+dos primeras son obligatorias:
+
+| | |
+|---|---|
+| `.{ns}-head` | el grupo que se mueve con la mirada |
+| `.{ns}-body` | el torso, que se mueve menos |
+| `.{ns}-pupil` | lo que se mueve más que la cabeza: el paralaje |
+| `.{ns}-eye` | lo que se achata al parpadear y al dormir |
+| `.{ns}-ear` | lo que se levanta esperando y cae durmiendo |
+
+**`behind` y `front` son huecos, no permisos.** El torso canónico se sigue
+dibujando siempre y sus anclajes no se mueven — es lo que la regla protege. Lo
+que habilitan es pintar alrededor: la cola de la ratita va detrás para que no se
+sacuda cada vez que mira el cursor, y la taza no pinta el torso y dibuja una
+mesa en `front`, porque una taza con hombros era justamente lo raro.
+
+Esto **no reemplaza** al contrato: un avatar puede seguir escribiéndose entero a
+mano, y el pet no sabe cuál de las dos formas usaste. El armazón es una
+comodidad. Si tu personaje se mueve distinto a todos, escribilo suelto — el
+esqueleto de abajo es para eso.
+
 ## Un esqueleto que funciona
 
 Un avatar completo y mínimo. Cumple las dos reglas — torso canónico y la

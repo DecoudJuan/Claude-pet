@@ -258,6 +258,28 @@ pingüino de 56 % de un núcleo a 13 %:
   repintados de cualquier movimiento lento.
 - **30 cuadros por segundo alcanzan.** Nadie mira de cerca un dibujo de 180 px.
 
+## El camino corto
+
+De las ~490 líneas que ocupa un avatar escrito a mano, unas 250 son maquinaria
+que no tiene nada de personal: el bucle, la mirada, el parpadeo, el tecleo,
+entrar y salir, soltar los timers. Eso vive en `core/rig.js` y lo usan nueve de
+los doce avatares — un avatar nuevo son 130 a 180 líneas de dibujo y nada más.
+
+```js
+window.PetRig.mount(host, opts, {
+  ns: 'zr', label: '...', edge: 'var(--zr-line)',
+  css: [ ... ],      // paletas y partes
+  head: [ ... ],     // el cráneo y los accesorios
+  behind: [ ... ],   // opcional: detrás del torso (una cola, un ala)
+  front: [ ... ],    // opcional: delante (un delantal, una mesa)
+  hands: { left, right, chin }
+});
+```
+
+Ver `AVATARS.md` para las clases que el armazón espera. **Es una comodidad, no
+una obligación**: si tu personaje se mueve distinto a todos, escribilo suelto
+con el esqueleto de siempre — el pet no sabe cuál de las dos formas usaste.
+
 ## Por dónde empezar
 
 `AVATARS.md` tiene **un esqueleto completo y mínimo** — torso canónico, hueco
