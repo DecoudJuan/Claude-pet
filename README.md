@@ -359,9 +359,10 @@ taparlos, y mide siempre lo mismo (228 × 254) en los tres tamaños.
 **Los paneles se cierran solos si los abandonás.** Abrís el de sesiones de un
 click, mirás, y volvés a lo tuyo: si en tres segundos no pasaste el mouse por
 encima, se apaga y se va. Mientras el mouse está adentro no se va —no te lo
-cerramos en la cara mientras elegís avatar— y cuando sale, vuelve a contar. El
-de *Falta un paso* es la excepción: ése tiene su ✕ y se queda hasta que
-decidas.
+cerramos en la cara mientras elegís avatar, ni mientras tenés el desplegable
+abierto— y cuando sale, vuelve a contar. Elegir algo no lo deja pegado: sacás
+el mouse y cuenta igual. El de *Falta un paso* es la excepción: ése tiene su ✕
+y se queda hasta que decidas.
 
 ### Por qué no te come los clicks
 

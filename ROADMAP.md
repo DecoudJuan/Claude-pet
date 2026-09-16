@@ -237,6 +237,32 @@ que se rompió.
   pedidos) y `quota.test.js` (un archivo que escribe otro proceso y puede llegar
   viejo, a medio escribir o con formas imprevistas).
 
+### 19. Irse cuando ya no hay nada que mirar
+
+- **Cerrabas la terminal y el pet se quedaba.** El pet se apaga 25 s después de
+  que se va la última sesión, y «irse» era que `SessionEnd` borrara su archivo.
+  Cerrando la terminal con la ✕ —o matándola— Claude Code se muere sin correr
+  ningún hook: el archivo quedaba, el pet contaba una sesión que ya no existía
+  y no se iba hasta el techo de las 6 horas.
+- **El pid del dueño es lo único que lo desmiente.** El hook lo lee de
+  `CLAUDE_PID`, que Claude Code exporta a todo lo que lanza, así que sale del
+  ambiente y no hay que preguntarle nada al sistema. No sirve el pid del hook ni
+  el de su shell: los dos se mueren apenas termina de escribir el archivo. El
+  pet pregunta con la señal 0 —que no mata nada— y borra a los fantasmas.
+- **Sin pid no se afirma nada.** Una sesión escrita por un hook más viejo sigue
+  valiendo hasta el techo de siempre: el error barato es tardar de más en irse,
+  no irse de más.
+- **Elegir avatar dejaba el panel abierto para siempre.** El auto-cierre se
+  rearma al salir el mouse, salvo mientras usás un `<select>` —su lista la
+  dibuja el sistema fuera de la ventana y para el DOM eso se ve igual que
+  haberse ido—. Eso se preguntaba mirando si el select tenía el foco, y elegir
+  una opción no le saca el foco ni dispara `blur`: cambiar de personaje, que es
+  justo cuando ya terminaste con el panel, era la única forma de dejarlo pegado.
+- **La pregunta correcta no era quién tiene el foco** sino si la lista del
+  sistema está abierta encima. Se abre con el `mousedown` y que se cerró se nota
+  porque la página vuelve a recibir movimientos del mouse, que mientras la lista
+  está arriba no llegan.
+
 ---
 
 ## Falta
@@ -246,7 +272,8 @@ que se rompió.
 - Que el globo diga qué herramienta está usando. `hook.js tool` ya lee
   `tool_name`; es sumar el evento sabiendo lo que cuesta en procesos.
 - Un desplegable propio en el panel: el del `<select>` lo dibuja el sistema
-  operativo y no sigue el estilo de la ventana.
+  operativo, no sigue el estilo de la ventana y es el que obliga a adivinar
+  cuándo está abierto para no cerrar el panel abajo suyo (ver 19).
 - **Firmar los instaladores.** Hoy Windows muestra SmartScreen y macOS
   Gatekeeper a todo el que los baje. Es plata —99 USD al año de Apple, unos 200
   de Windows— y es la barrera número uno para el que no te conoce.

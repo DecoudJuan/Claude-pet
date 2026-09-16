@@ -105,7 +105,7 @@ su propia instalación. Nada de eso sale de un input tuyo ni de la red.
 
 | | |
 |---|---|
-| `%LOCALAPPDATA%\claude-pets\sessions\<id>.json` | Una línea por sesión de Claude Code abierta: el id de sesión, el directorio de trabajo, el estado, el nombre de la última herramienta y el texto de la notificación. |
+| `%LOCALAPPDATA%\claude-pets\sessions\<id>.json` | Una línea por sesión de Claude Code abierta: el id de sesión, el directorio de trabajo, el estado, el nombre de la última herramienta, el texto de la notificación y el PID del Claude Code dueño de la sesión. |
 | `%LOCALAPPDATA%\claude-pets\pet.lock` | El PID de la ventana, para no abrir dos. |
 | `%LOCALAPPDATA%\claude-pets\muted` | Una marca de «lo cerré a mano». |
 | `%APPDATA%\claude-pet\pet.json` | Tus preferencias: posición, tamaño, avatar, paleta y notebook. |
@@ -113,8 +113,16 @@ su propia instalación. Nada de eso sale de un input tuyo ni de la red.
 | `~/.claude/quota-status/current.json` | Lo escribe el statusline, no el pet: el porcentaje de uso y a qué hora vuelve. El pet sólo lo lee. Sin secretos ni contenido de tus conversaciones. |
 
 **Retención.** El archivo de una sesión se borra cuando la sesión termina
-(`SessionEnd`). Los que quedan huérfanos — porque cerraste la terminal de
-cuajo — se borran solos a las 6 horas. Nada se acumula.
+(`SessionEnd`). Cerrando la terminal de cuajo ese hook no llega a correr, así
+que desde la 1.4.2 el archivo guarda el PID del Claude Code dueño y el pet lo
+borra apenas ve que ese proceso ya no existe. Las 6 horas quedan de techo para
+las sesiones sin PID —escritas por un hook anterior—. Nada se acumula.
+
+Ese PID se usa para una sola cosa: preguntar con la **señal 0**, que no manda
+nada ni mata nada, si el proceso sigue vivo. El pet no le manda una señal de
+verdad a ningún proceso, ni al suyo. Un archivo con un PID inventado —que
+tendría que escribirlo alguien que ya corre como tu usuario— a lo sumo hace que
+una sesión fantasma tarde de más en desaparecer.
 
 **Lo más sensible que hay ahí es la ruta de tu proyecto** y, si Claude Code
 pidió permiso, el texto de esa notificación, que puede nombrar un archivo o un
