@@ -154,7 +154,16 @@
       else if (page === 'sessions') renderSessions();
       // El paso que falta no se va solo: tiene su ✕ y se queda hasta que
       // decidas. Los otros dos son consultas de pasada.
-      if (page !== 'setup') armAutoClose();
+      if (page !== 'setup') {
+        // El panel abre pegado al botón que lo abrió, así que puede nacer justo
+        // abajo del puntero sin que llegue ningún pointerenter que lo cuente.
+        // Si nace tapado por el mouse, el que arranca la cuenta es el
+        // pointerleave; si nace al lado —el caso normal, abre arriba del
+        // botón—, cuenta desde ya.
+        inside = hovered();
+        if (inside) cancelAutoClose();
+        else armAutoClose();
+      }
     } else {
       cancelAutoClose();
     }
@@ -206,6 +215,35 @@
     }, 3000);
   }
 
+  /*
+   * ¿El mouse está sobre el panel?
+   *
+   * Esto se preguntaba con `panel.matches(':hover')`, y era la razón por la que
+   * el panel se quedaba colgado al irte a otra aplicación: **el `:hover` de
+   * Chromium se queda pegado** cuando el puntero abandona la ventana de golpe o
+   * cuando la ventana pierde el foco. No hay un movimiento adentro que lo
+   * limpie, así que el guard veía «el mouse sigue encima» para siempre, no
+   * rearmaba nunca y el panel no se cerraba más. Encima sin animación, porque
+   * la animación es el final del temporizador que nunca arrancó.
+   *
+   * Ahora el estado lo llevamos nosotros, con los eventos de entrada y salida
+   * del panel, que son hechos y no una consulta a un estilo que puede estar
+   * viejo. El `:hover` quedó sólo para sembrarlo al abrir: ahí es de este
+   * instante — acabás de apretar el botón — y sirve para el caso más común, que
+   * el panel abra justo abajo del puntero sin que se mueva ni un píxel.
+   */
+  var inside = false;
+
+  function hovered() {
+    try { return panel.matches(':hover'); } catch (e) { return false; }
+  }
+
+  // Irte a otra aplicación es abandonar el panel, tenga el mouse encima o no:
+  // quedó atrás, tapando escritorio, y vos estás en otra cosa.
+  function away() {
+    return !inside || !document.hasFocus();
+  }
+
   // Mientras el mouse está adentro el panel no se va; cuando sale, vuelve a
   // contar. Que se rearme es lo que hace que pasarle por encima al irte no lo
   // deje abierto para siempre.
@@ -214,8 +252,7 @@
     // Con el desplegable abierto la lista está fuera de la ventana: para el DOM
     // el mouse se fue, pero lo estás usando.
     if (picking) return;
-    // Salió el foco pero el mouse volvió a entrar: no hay nada que rearmar.
-    try { if (panel.matches(':hover')) return; } catch (e) { /* da igual */ }
+    if (!away()) return;
     armAutoClose();
   }
 
@@ -258,8 +295,46 @@
   // cerraste con Escape en una tecla que no vimos pasar.
   document.addEventListener('pointermove', function () { if (picking) endPick(); });
 
-  panel.addEventListener('pointerenter', cancelAutoClose);
-  panel.addEventListener('pointerleave', rearmIfAway);
+  panel.addEventListener('pointerenter', function () {
+    inside = true;
+    cancelAutoClose();
+  });
+
+  panel.addEventListener('pointerleave', function () {
+    inside = false;
+    rearmIfAway();
+  });
+
+  // Volver de otra aplicación directo a apretar algo del panel: el puntero ya
+  // estaba encima, así que no hay `pointerenter` que lo cuente. Un clic adentro
+  // es la prueba más fuerte que hay de que lo estás usando.
+  panel.addEventListener('pointerdown', function () {
+    inside = true;
+    cancelAutoClose();
+  });
+
+  /*
+   * Las dos salidas que el panel no ve.
+   *
+   * `pointerleave` es del panel, y hay dos formas de abandonarlo sin pasar por
+   * él: sacar el puntero de la ventana entera de un saque, y —la que lo dejaba
+   * colgado— hacer clic en otra aplicación. En el segundo caso el mouse ni
+   * siquiera se mueve: la ventana se va al fondo y el panel se queda ahí,
+   * esperando un evento que no va a llegar nunca.
+   *
+   * El desplegable del sistema también se lleva el foco, y por eso `picking`
+   * manda: cerrar el panel abajo de la lista abierta sería peor que dejarlo.
+   */
+  document.addEventListener('mouseleave', function () {
+    inside = false;
+    rearmIfAway();
+  });
+
+  window.addEventListener('blur', function () {
+    if (picking) return;
+    inside = false;
+    rearmIfAway();
+  });
 
   /* ---------- el paso que falta ---------- */
 
@@ -783,14 +858,32 @@
 
   window.addEventListener('pointerup', function () {
     if (!down) return;
-    window.pet.dragEnd();
-    stage.classList.remove('dragging');
-    if (!down.moved && Date.now() - down.t < 400 && avatar) {   // click sin arrastrar = toque
+    var tap = !down.moved && Date.now() - down.t < 400;
+    releaseDrag();
+    if (tap && avatar) {   // click sin arrastrar = toque
       avatar.poke();
       hush();
     }
-    down = null;
   });
+
+  /*
+   * Soltar el arrastre sin un `pointerup`.
+   *
+   * Es el mismo problema que el del panel, en el otro extremo del archivo: si
+   * el botón se suelta afuera —o el sistema se lleva el puntero, o te vas a
+   * otra aplicación con el botón apretado— ese evento no llega nunca. Y `down`
+   * colgado no es cosmético: mientras exista, la ventana se queda atajando el
+   * mouse y le come los clicks al escritorio.
+   */
+  function releaseDrag() {
+    if (!down) return;
+    down = null;
+    window.pet.dragEnd();
+    stage.classList.remove('dragging');
+  }
+
+  window.addEventListener('pointercancel', releaseDrag);
+  window.addEventListener('blur', releaseDrag);
 
   host.addEventListener('contextmenu', function (e) {
     e.preventDefault();
