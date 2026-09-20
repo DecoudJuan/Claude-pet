@@ -2,6 +2,8 @@
 
 # Claude Pet
 
+<img width="620" height="313" alt="1789594679478" src="https://github.com/user-attachments/assets/38fc982d-ffda-45d0-8520-4a63d01b8572" />
+
 **Una mascota de escritorio que sabe qué está haciendo Claude Code. Teclea
 mientras itera, levanta la vista cuando piensa, y te saca un globo de diálogo
 cuando termina — así dejás de mirar la terminal para ver si ya está.**
