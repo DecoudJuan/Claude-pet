@@ -1,12 +1,7 @@
 <div align="center">
 
+
 # Claude Pet
-
-
-
-<img width="620" height="313" alt="1789594679478" src="https://github.com/user-attachments/assets/38fc982d-ffda-45d0-8520-4a63d01b8572" />
-
-
 
 **Una mascota de escritorio que sabe qué está haciendo Claude Code. Teclea
 mientras itera, levanta la vista cuando piensa, y te saca un globo de diálogo
@@ -21,6 +16,10 @@ dibujo es un módulo aparte: cualquiera puede escribir el suyo y elegirlo desde 
 [![Runtime](https://img.shields.io/badge/runtime-Electron-4a6fa5)](pet/package.json)
 [![Dependencias del dibujo](https://img.shields.io/badge/dependencias%20del%20dibujo-0-2b6e4f)](avatars/penguin/draw.js)
 [![Red](https://img.shields.io/badge/red-1%20pedido%2Fd%C3%ADa%2C%20apagable-2b6e4f)](SECURITY.md#lo-único-que-sale-el-chequeo-de-versión)
+
+
+<img width="620" height="313" alt="1789594679478" src="https://github.com/user-attachments/assets/38fc982d-ffda-45d0-8520-4a63d01b8572" />
+
 
 </div>
 
