@@ -1,3 +1,4 @@
+<!-- repo-check: sin-deploy -->
 <div align="center">
 
 
@@ -13,7 +14,7 @@ dibujo es un módulo aparte: cualquiera puede escribir el suyo y elegirlo desde 
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-d9b45f)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20·%20macOS%20·%20Linux-1f2430)](#instalar)
-[![Runtime](https://img.shields.io/badge/runtime-Electron-4a6fa5)](pet/package.json)
+[![Runtime](https://img.shields.io/badge/runtime-Electron-4a6fa5)](package.json)
 [![Dependencias del dibujo](https://img.shields.io/badge/dependencias%20del%20dibujo-0-2b6e4f)](avatars/penguin/draw.js)
 [![Red](https://img.shields.io/badge/red-1%20pedido%2Fd%C3%ADa%2C%20apagable-2b6e4f)](SECURITY.md#lo-único-que-sale-el-chequeo-de-versión)
 
@@ -140,6 +141,15 @@ proceso Node en cada llamada a herramienta de cada sesión — decenas por turno
 unos 50 ms de arranque cada uno. Para saber si está laburando alcanza con el
 par `UserPromptSubmit` / `Stop`.
 
+## Stack
+
+- **Electron** (`^44`) para la ventana transparente de escritorio; **Node 18+** (CI en Node 20).
+- **JavaScript** plano en CommonJS, sin framework ni bundler. Cada avatar es SVG dibujado a mano, sin dependencias.
+- **electron-builder** para los instaladores de Windows (`.exe`, instalador y portable), macOS (`.dmg`) y Linux
+  (`.AppImage`, `.deb`).
+- **Tests** con Node pelado (`node test/run.js`), sin Electron: un proceso por archivo `*.test.js`.
+- **GitHub Actions**: `test.yml` (suite en Ubuntu, Windows y macOS) y `release.yml` (instaladores por tag).
+
 ## Instalar
 
 ### Con el instalador
@@ -166,7 +176,7 @@ primera vez.
 Si eso te incomoda, compilalo vos: las instrucciones están abajo y el resultado
 es el mismo binario.
 
-### Desde el código
+### Desde el código (correrlo en local)
 
 ```bash
 git clone https://github.com/DecoudJuan/Claude-pet.git
@@ -176,6 +186,8 @@ npm start
 ```
 
 Necesita Node 18+. `npm install` baja Electron, que son unos 200 MB.
+
+Para correr los tests no hace falta Electron: `npm test`.
 
 Arrancado así se queda hasta que lo cierres vos. Lanzado por el hook se cierra
 solo cuando no quedan sesiones.
@@ -483,7 +495,6 @@ Claude-pet/
 │   ├── turn.js           El latido del turno. Ctrl+C no dispara ningún hook,
 │   │                     así que se confirma contra el transcript: mientras
 │   │                     crece, el turno vive.
-│   └── package.json
 │
 ├── demo/
 │   └── index.html        El avatar suelto en una página, sin Electron ni
@@ -531,6 +542,25 @@ siempre con 0 y sin escribir en stdout, para no poder romperte un turno.
 
 **→ [Postura completa, qué se guarda y el repaso del OWASP Top 10](SECURITY.md)**
 
+## Deploy
+
+No hay sitio ni servicio desplegado: Claude Pet es una **aplicación de escritorio** que se instala en cada
+máquina. Lo que se publica son los instaladores, en
+[GitHub Releases](https://github.com/DecoudJuan/Claude-pet/releases/latest). Al empujar un tag `v*`,
+`.github/workflows/release.yml` compila Windows, macOS y Linux, cada uno en su runner, y sube los binarios al mismo
+release (sin firmar; ver [Instalar](#instalar)). Para correrlo desde el código, ver
+[Desde el código](#desde-el-código-correrlo-en-local).
+
+## Documentos
+
+- [docs/arquitectura.md](docs/arquitectura.md) — cómo está armado: capas, flujo del hook a la ventana y ciclo de vida
+- [AVATARS.md](AVATARS.md) — el contrato de avatares y cómo sumar uno
+- [CONTRIBUTING.md](CONTRIBUTING.md) — qué se acepta y cómo mandarlo
+- [ROADMAP.md](ROADMAP.md) — en qué orden se construyó y qué falta
+- [SECURITY.md](SECURITY.md) — qué guarda, qué no, y la postura de seguridad
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — código de conducta
+- [CLAUDE.md](CLAUDE.md) — guía para trabajar el repo con Claude Code
+
 ## Licencia
 
-MIT.
+MIT. Ver [LICENSE](LICENSE).
